@@ -1,10 +1,15 @@
 package config
 
 type ConfVar struct {
-	Key          string
+	key          string
 	Value        interface{}
-	Type         string
-	IsRequired   bool
-	DefaultValue interface{}
+	varType      string
+	isRequired   bool
+	defaultValue interface{}
 	interactor   *ConfigInteractor
 }
+
+const (
+	errRegisterConfigVarFailed = "register config var failed: "
+	errEmptyKey                = errRegisterConfigVarFailed + "empty key"
+)

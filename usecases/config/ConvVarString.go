@@ -3,30 +3,31 @@ package config
 import "github.com/pkg/errors"
 
 type ConfVarString struct {
-	ConfVar *ConfVar
+	confVar *ConfVar
 }
 
 func (cv *ConfVarString) Get() (value string) {
-	return cv.ConfVar.Value.(string)
+	return cv.confVar.Value.(string)
 }
 
-func (ci *ConfigInteractor) RegisterVarString(key string, isRequired bool, defaultValue string) (confVar *ConfVarString, err error) {
+func (ci *ConfigInteractor) RegisterVarString(key string, isRequired bool, defaultValue string) (confVar *ConfVarString) {
 	if key == "" {
-		err = errors.Errorf("empty key")
+		err := errors.Errorf(errEmptyKey)
+		ci.errs = append(ci.errs, err)
 		return
 	}
 	key = ci.prefix + key
 
 	confVar = &ConfVarString{
-		ConfVar: &ConfVar{
-			Key:          key,
-			Type:         "string",
-			IsRequired:   isRequired,
-			DefaultValue: defaultValue,
+		confVar: &ConfVar{
+			key:          key,
+			varType:      "string",
+			isRequired:   isRequired,
+			defaultValue: defaultValue,
 			interactor:   ci,
 		},
 	}
 
-	ci.envMap[key] = confVar.ConfVar
+	ci.envMap[key] = confVar.confVar
 	return
 }

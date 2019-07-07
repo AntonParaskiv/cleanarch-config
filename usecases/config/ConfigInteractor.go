@@ -33,6 +33,7 @@ type ConfigInteractor struct {
 	prefix string
 	envMap map[string]*ConfVar
 	Log    Logger
+	errs   []error
 }
 
 func NewConfigInteractor(repo ConfigRepository, prefix string, log Logger) (ci *ConfigInteractor) {
@@ -41,5 +42,12 @@ func NewConfigInteractor(repo ConfigRepository, prefix string, log Logger) (ci *
 	ci.prefix = prefix
 	ci.Log = log
 	ci.envMap = make(map[string]*ConfVar, 0)
+	ci.errs = make([]error, 0)
+	return
+}
+
+func (ci *ConfigInteractor) GetErrors() (errs []error) {
+	errs = ci.errs
+	ci.errs = make([]error, 0)
 	return
 }

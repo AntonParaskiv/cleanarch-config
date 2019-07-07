@@ -2,13 +2,19 @@ package config
 
 import "github.com/pkg/errors"
 
+const (
+	errReadConfFailed  = "read config failed: "
+	errKeyMustBeFilled = errReadConfFailed + "%s must be filled"
+	errGetKeyFailedErr = errReadConfFailed + "get %s failed: %s"
+)
+
 func (ci *ConfigInteractor) ReadConf() (errReached bool) {
 	ci.Log.Debug("config reading started")
 
 	// for all vars
 	for key, confVar := range ci.envMap {
 
-		switch confVar.Type {
+		switch confVar.varType {
 
 		case "string":
 			// get value from repo
@@ -16,14 +22,14 @@ func (ci *ConfigInteractor) ReadConf() (errReached bool) {
 
 			if value == "" {
 				// check require
-				if confVar.IsRequired {
-					err := errors.Errorf("%s must be filled", key)
-					ci.Log.Error(err.Error())
+				if confVar.isRequired {
+					err := errors.Errorf(errKeyMustBeFilled, key)
+					ci.errs = append(ci.errs, err)
 					errReached = true
 					continue
 				} else {
 					// set default value
-					confVar.Value = confVar.DefaultValue
+					confVar.Value = confVar.defaultValue
 				}
 			} else {
 				confVar.Value = value
@@ -33,20 +39,20 @@ func (ci *ConfigInteractor) ReadConf() (errReached bool) {
 			// get value from repo
 			value, filled, err := ci.repo.GetBool(key)
 			if err != nil {
-				err := errors.Errorf("get %s failed: %s", key, err.Error())
-				ci.Log.Error(err.Error())
+				err := errors.Errorf(errGetKeyFailedErr, key, err.Error())
+				ci.errs = append(ci.errs, err)
 				errReached = true
 				continue
 			}
 			if !filled {
-				if confVar.IsRequired {
-					err := errors.Errorf("%s must be filled", key)
-					ci.Log.Error(err.Error())
+				if confVar.isRequired {
+					err := errors.Errorf(errKeyMustBeFilled, key)
+					ci.errs = append(ci.errs, err)
 					errReached = true
 					continue
 				} else {
 					// set default value
-					confVar.Value = confVar.DefaultValue
+					confVar.Value = confVar.defaultValue
 				}
 			} else {
 				confVar.Value = value
@@ -56,20 +62,20 @@ func (ci *ConfigInteractor) ReadConf() (errReached bool) {
 			// get value from repo
 			value, filled, err := ci.repo.GetInt64(key)
 			if err != nil {
-				err := errors.Errorf("get %s failed: %s", key, err.Error())
-				ci.Log.Error(err.Error())
+				err := errors.Errorf(errGetKeyFailedErr, key, err.Error())
+				ci.errs = append(ci.errs, err)
 				errReached = true
 				continue
 			}
 			if !filled {
-				if confVar.IsRequired {
-					err := errors.Errorf("%s must be filled", key)
-					ci.Log.Error(err.Error())
+				if confVar.isRequired {
+					err := errors.Errorf(errKeyMustBeFilled, key)
+					ci.errs = append(ci.errs, err)
 					errReached = true
 					continue
 				} else {
 					// set default value
-					confVar.Value = confVar.DefaultValue
+					confVar.Value = confVar.defaultValue
 				}
 			} else {
 				confVar.Value = value
@@ -79,20 +85,20 @@ func (ci *ConfigInteractor) ReadConf() (errReached bool) {
 			// get value from repo
 			value, filled, err := ci.repo.GetUint64(key)
 			if err != nil {
-				err := errors.Errorf("get %s failed: %s", key, err.Error())
-				ci.Log.Error(err.Error())
+				err := errors.Errorf(errGetKeyFailedErr, key, err.Error())
+				ci.errs = append(ci.errs, err)
 				errReached = true
 				continue
 			}
 			if !filled {
-				if confVar.IsRequired {
-					err := errors.Errorf("%s must be filled", key)
-					ci.Log.Error(err.Error())
+				if confVar.isRequired {
+					err := errors.Errorf(errKeyMustBeFilled, key)
+					ci.errs = append(ci.errs, err)
 					errReached = true
 					continue
 				} else {
 					// set default value
-					confVar.Value = confVar.DefaultValue
+					confVar.Value = confVar.defaultValue
 				}
 			} else {
 				confVar.Value = value
@@ -102,20 +108,20 @@ func (ci *ConfigInteractor) ReadConf() (errReached bool) {
 			// get value from repo
 			value, filled, err := ci.repo.GetFloat64(key)
 			if err != nil {
-				err := errors.Errorf("get %s failed: %s", key, err.Error())
-				ci.Log.Error(err.Error())
+				err := errors.Errorf(errGetKeyFailedErr, key, err.Error())
+				ci.errs = append(ci.errs, err)
 				errReached = true
 				continue
 			}
 			if !filled {
-				if confVar.IsRequired {
-					err := errors.Errorf("%s must be filled", key)
-					ci.Log.Error(err.Error())
+				if confVar.isRequired {
+					err := errors.Errorf(errKeyMustBeFilled, key)
+					ci.errs = append(ci.errs, err)
 					errReached = true
 					continue
 				} else {
 					// set default value
-					confVar.Value = confVar.DefaultValue
+					confVar.Value = confVar.defaultValue
 				}
 			} else {
 				confVar.Value = value

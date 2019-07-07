@@ -10,19 +10,20 @@ func (cv *ConfVarBool) Get() (value bool) {
 	return cv.ConfVar.Value.(bool)
 }
 
-func (ci *ConfigInteractor) RegisterVarBool(key string, isRequired bool, defaultValue bool) (confVar *ConfVarBool, err error) {
+func (ci *ConfigInteractor) RegisterVarBool(key string, isRequired bool, defaultValue bool) (confVar *ConfVarBool) {
 	if key == "" {
-		err = errors.Errorf("empty key")
+		err := errors.Errorf(errEmptyKey)
+		ci.errs = append(ci.errs, err)
 		return
 	}
 	key = ci.prefix + key
 
 	confVar = &ConfVarBool{
 		ConfVar: &ConfVar{
-			Key:          key,
-			Type:         "bool",
-			IsRequired:   isRequired,
-			DefaultValue: defaultValue,
+			key:          key,
+			varType:      "bool",
+			isRequired:   isRequired,
+			defaultValue: defaultValue,
 			interactor:   ci,
 		},
 	}
