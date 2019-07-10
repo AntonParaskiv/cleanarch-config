@@ -1,7 +1,8 @@
-package envStorageMock
+package envStorageOs
 
 import (
 	"github.com/pkg/errors"
+	"os"
 	"reflect"
 	"testing"
 )
@@ -9,38 +10,45 @@ import (
 const (
 	ErrorResultIsNotEqualToExpect   = "result is not equal to expect"
 	ErrorShouldBeErrorButNotReached = "should be error, but not reached"
+	ErrorSetEnvFailed               = "setenv failed: "
 )
 
 var (
-	mockEnv *MockEnv
+	osEnv *OsEnv
 )
 
 // New
 func TestNew(t *testing.T) {
-	mockEnv = New()
-	mockEnvExpect := &MockEnv{
-		storage:       map[string]string{},
-		simulateError: false,
-	}
+	osEnv = New()
+	osEnvExpect := &OsEnv{}
 
-	if !reflect.DeepEqual(mockEnv, mockEnvExpect) {
+	if !reflect.DeepEqual(osEnv, osEnvExpect) {
 		t.Error(ErrorResultIsNotEqualToExpect)
 		return
 	}
 
 	// set extra vars for next tests
-	mockEnv.storage["key"] = "value"
-	mockEnv.storage["lorem"] = "ipsum"
-	mockEnv.storage["ilike"] = "gophers"
+	if err := os.Setenv("key", "value"); err != nil {
+		t.Error(ErrorSetEnvFailed, err.Error())
+		return
+	}
+	if err := os.Setenv("lorem", "ipsum"); err != nil {
+		t.Error(ErrorSetEnvFailed, err.Error())
+		return
+	}
+	if err := os.Setenv("ilike", "gophers"); err != nil {
+		t.Error(ErrorSetEnvFailed, err.Error())
+		return
+	}
 }
 
 // Getenv
-func TestMockEnv_Getenv(t *testing.T) {
+func TestOsEnv_Getenv(t *testing.T) {
 	envKey := "key"
 	envValueExpect := "value"
 
 	// get var
-	resultValue := mockEnv.Getenv(envKey)
+	resultValue := osEnv.Getenv(envKey)
 	if resultValue != envValueExpect {
 		t.Error(ErrorResultIsNotEqualToExpect)
 		return
@@ -48,77 +56,61 @@ func TestMockEnv_Getenv(t *testing.T) {
 }
 
 // Setenv success
-func TestMockEnv_Setenv(t *testing.T) {
+func TestOsEnv_Setenv(t *testing.T) {
 	envKey := "foo"
 	envValue := "bar"
 
 	// set var
-	err := mockEnv.Setenv(envKey, envValue)
+	err := osEnv.Setenv(envKey, envValue)
 	if err != nil {
 		t.Error(ErrorResultIsNotEqualToExpect)
 		return
 	}
 
 	// check var
-	if resultValue := mockEnv.storage[envKey]; resultValue != envValue {
+	if resultValue := os.Getenv(envKey); resultValue != envValue {
 		t.Error("result is not equal to expect")
 		return
 	}
 }
 
 // Setenv failed
-func TestMockEnv_Setenv2(t *testing.T) {
-	envKey := "foo"
+func TestOsEnv_Setenv2(t *testing.T) {
+	envKey := ""
 	envValue := "bar"
 
 	// set var
-	mockEnv.simulateError = true
-	err := mockEnv.Setenv(envKey, envValue)
+	err := osEnv.Setenv(envKey, envValue)
 	if err == nil {
 		t.Error(ErrorShouldBeErrorButNotReached)
 		return
 	}
-	mockEnv.simulateError = false
-}
-
-// Unset failed
-func TestMockEnv_Unsetenv(t *testing.T) {
-	envKey := "foo"
-
-	// unset var
-	mockEnv.simulateError = true
-	err := mockEnv.Unsetenv(envKey)
-	if err == nil {
-		t.Error(ErrorShouldBeErrorButNotReached)
-		return
-	}
-	mockEnv.simulateError = false
 }
 
 // Unset success
-func TestMockEnv_Unsetenv2(t *testing.T) {
+func TestOsEnv_Unsetenv(t *testing.T) {
 	envKey := "foo"
 
 	// unset var
-	err := mockEnv.Unsetenv(envKey)
+	err := osEnv.Unsetenv(envKey)
 	if err != nil {
 		t.Error(errors.Errorf("unsetenv failed: %s", err.Error()))
 		return
 	}
 
 	// check var
-	if _, ok := mockEnv.storage[envKey]; ok {
+	if _, ok := os.LookupEnv(envKey); ok {
 		t.Error(ErrorResultIsNotEqualToExpect)
 		return
 	}
 }
 
 // ExpandEnv exist
-func TestMockEnv_ExpandEnv(t *testing.T) {
+func TestOsEnv_ExpandEnv(t *testing.T) {
 	sIn := "${ilike} are my favorite animals"
 	sOutExpect := "gophers are my favorite animals"
 
-	sOut := mockEnv.ExpandEnv(sIn)
+	sOut := osEnv.ExpandEnv(sIn)
 	if sOut != sOutExpect {
 		t.Error(errors.Errorf(ErrorResultIsNotEqualToExpect))
 		return
@@ -126,11 +118,11 @@ func TestMockEnv_ExpandEnv(t *testing.T) {
 }
 
 // ExpandEnv not exist
-func TestMockEnv_ExpandEnv2(t *testing.T) {
+func TestOsEnv_ExpandEnv2(t *testing.T) {
 	sIn := "I hate ${nobody}"
 	sOutExpect := "I hate "
 
-	sOut := mockEnv.ExpandEnv(sIn)
+	sOut := osEnv.ExpandEnv(sIn)
 	if sOut != sOutExpect {
 		t.Error(errors.Errorf(ErrorResultIsNotEqualToExpect))
 		return
@@ -138,11 +130,11 @@ func TestMockEnv_ExpandEnv2(t *testing.T) {
 }
 
 // LookupEnv exist
-func TestMockEnv_LookupEnv(t *testing.T) {
+func TestOsEnv_LookupEnv(t *testing.T) {
 	envKey := "ilike"
 	envValueExpect := "gophers"
 
-	envValue, ok := mockEnv.LookupEnv(envKey)
+	envValue, ok := osEnv.LookupEnv(envKey)
 	if !ok {
 		t.Error(errors.Errorf(ErrorResultIsNotEqualToExpect))
 		return
@@ -154,10 +146,10 @@ func TestMockEnv_LookupEnv(t *testing.T) {
 }
 
 // LookupEnv not exist
-func TestMockEnv_LookupEnv2(t *testing.T) {
+func TestOsEnv_LookupEnv2(t *testing.T) {
 	envKey := "ihate"
 
-	_, ok := mockEnv.LookupEnv(envKey)
+	_, ok := osEnv.LookupEnv(envKey)
 	if ok {
 		t.Error(errors.Errorf(ErrorResultIsNotEqualToExpect))
 		return
@@ -166,20 +158,29 @@ func TestMockEnv_LookupEnv2(t *testing.T) {
 
 // Clearenv
 func TestMockEnv_Clearenv(t *testing.T) {
-	storageExpect := map[string]string{}
+	environExpecct := []string{}
 
-	mockEnv.Clearenv()
-	if !reflect.DeepEqual(mockEnv.storage, storageExpect) {
+	osEnv.Clearenv()
+	if !reflect.DeepEqual(os.Environ(), environExpecct) {
 		t.Error(errors.Errorf(ErrorResultIsNotEqualToExpect))
 		return
 	}
 }
 
 // Environ
-func TestMockEnv_Environ(t *testing.T) {
-	mockEnv.storage["key"] = "value"
-	mockEnv.storage["lorem"] = "ipsum"
-	mockEnv.storage["ilike"] = "gophers"
+func TestOsEnv_Environ(t *testing.T) {
+	if err := os.Setenv("key", "value"); err != nil {
+		t.Error(ErrorSetEnvFailed, err.Error())
+		return
+	}
+	if err := os.Setenv("lorem", "ipsum"); err != nil {
+		t.Error(ErrorSetEnvFailed, err.Error())
+		return
+	}
+	if err := os.Setenv("ilike", "gophers"); err != nil {
+		t.Error(ErrorSetEnvFailed, err.Error())
+		return
+	}
 
 	varsExpect := []string{
 		"key=value",
@@ -187,7 +188,7 @@ func TestMockEnv_Environ(t *testing.T) {
 		"ilike=gophers",
 	}
 
-	vars := mockEnv.Environ()
+	vars := osEnv.Environ()
 	if !sameStringSlice(vars, varsExpect) {
 		t.Error(errors.Errorf(ErrorResultIsNotEqualToExpect))
 		return
@@ -222,94 +223,92 @@ func sameStringSlice(x, y []string) bool {
 
 func BenchmarkNew(b *testing.B) {
 	b.ReportAllocs()
-	mockEnv = New()
-	mockEnv.storage["key"] = "value"
-	mockEnv.storage["lorem"] = "ipsum"
-	mockEnv.storage["ilike"] = "gophers"
+	osEnv = New()
+
+	if err := os.Setenv("key", "value"); err != nil {
+		b.Error(ErrorSetEnvFailed, err.Error())
+		return
+	}
+	if err := os.Setenv("lorem", "ipsum"); err != nil {
+		b.Error(ErrorSetEnvFailed, err.Error())
+		return
+	}
+	if err := os.Setenv("ilike", "gophers"); err != nil {
+		b.Error(ErrorSetEnvFailed, err.Error())
+		return
+	}
 
 	for i := 0; i < b.N; i++ {
 		New()
 	}
 }
 
-func BenchmarkMockEnv_Getenv(b *testing.B) {
+func BenchmarkOsEnv_Getenv(b *testing.B) {
 	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
-		mockEnv.Getenv("key")
+		osEnv.Getenv("key")
 	}
 }
 
-func BenchmarkMockEnv_Setenv(b *testing.B) {
+func BenchmarkOsEnv_Setenv(b *testing.B) {
 	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
-		mockEnv.Setenv("foo", "bar")
+		osEnv.Setenv("foo", "bar")
 	}
 }
 
-func BenchmarkMockEnv_Setenv2(b *testing.B) {
-	b.ReportAllocs()
-	mockEnv.simulateError = true
-	for i := 0; i < b.N; i++ {
-		mockEnv.Setenv("foo", "bar")
-	}
-	mockEnv.simulateError = false
-
-}
-
-func BenchmarkMockEnv_Unsetenv(b *testing.B) {
-	b.ReportAllocs()
-	mockEnv.simulateError = true
-	for i := 0; i < b.N; i++ {
-		mockEnv.Unsetenv("foo")
-	}
-	mockEnv.simulateError = false
-}
-
-func BenchmarkMockEnv_Unsetenv2(b *testing.B) {
+func BenchmarkOsEnv_Setenv2(b *testing.B) {
 	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
-		mockEnv.Unsetenv("foo")
+		osEnv.Setenv("", "bar")
 	}
 }
 
-func BenchmarkMockEnv_ExpandEnv(b *testing.B) {
+func BenchmarkOsEnv_Unsetenv(b *testing.B) {
 	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
-		mockEnv.ExpandEnv("${ilike} are my favorite animals")
+		osEnv.Unsetenv("foo")
 	}
 }
 
-func BenchmarkMockEnv_ExpandEnv2(b *testing.B) {
+func BenchmarkOsEnv_ExpandEnv(b *testing.B) {
 	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
-		mockEnv.ExpandEnv("I hate ${nobody}")
+		osEnv.ExpandEnv("${ilike} are my favorite animals")
 	}
 }
 
-func BenchmarkMockEnv_LookupEnv(b *testing.B) {
+func BenchmarkOsEnv_ExpandEnv2(b *testing.B) {
 	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
-		mockEnv.LookupEnv("ilike")
+		osEnv.ExpandEnv("I hate ${nobody}")
 	}
 }
 
-func BenchmarkMockEnv_LookupEnv2(b *testing.B) {
+func BenchmarkOsEnv_LookupEnv(b *testing.B) {
 	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
-		mockEnv.LookupEnv("ihate")
+		osEnv.LookupEnv("ilike")
 	}
 }
 
-func BenchmarkMockEnv_Environ(b *testing.B) {
+func BenchmarkOsEnv_LookupEnv2(b *testing.B) {
 	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
-		mockEnv.Environ()
+		osEnv.LookupEnv("ihate")
 	}
 }
 
-func BenchmarkMockEnv_Clearenv(b *testing.B) {
+func BenchmarkOsEnv_Environ(b *testing.B) {
 	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
-		mockEnv.Clearenv()
+		osEnv.Environ()
+	}
+}
+
+func BenchmarkOsEnv_Clearenv(b *testing.B) {
+	b.ReportAllocs()
+	for i := 0; i < b.N; i++ {
+		osEnv.Clearenv()
 	}
 }
