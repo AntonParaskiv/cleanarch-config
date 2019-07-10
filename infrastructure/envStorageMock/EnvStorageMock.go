@@ -9,36 +9,36 @@ import (
 const ErrorSimulated = "simulated error"
 
 type MockEnv struct {
-	storage       map[string]string
-	simulateError bool
+	Storage       map[string]string
+	SimulateError bool
 }
 
 func New() (mockEnv *MockEnv) {
 	mockEnv = new(MockEnv)
-	mockEnv.storage = make(map[string]string)
+	mockEnv.Storage = make(map[string]string)
 	return
 }
 
 func (mockEnv *MockEnv) Getenv(key string) (value string) {
-	value = mockEnv.storage[key]
+	value = mockEnv.Storage[key]
 	return
 }
 
 func (mockEnv *MockEnv) Setenv(key, value string) (err error) {
-	if mockEnv.simulateError {
+	if mockEnv.SimulateError {
 		err = errors.Errorf(ErrorSimulated)
 		return
 	}
-	mockEnv.storage[key] = value
+	mockEnv.Storage[key] = value
 	return
 }
 
 func (mockEnv *MockEnv) Unsetenv(key string) (err error) {
-	if mockEnv.simulateError {
+	if mockEnv.SimulateError {
 		err = errors.Errorf(ErrorSimulated)
 		return
 	}
-	delete(mockEnv.storage, key)
+	delete(mockEnv.Storage, key)
 	return
 }
 
@@ -48,13 +48,13 @@ func (mockEnv *MockEnv) ExpandEnv(sIn string) (sOut string) {
 }
 
 func (mockEnv *MockEnv) LookupEnv(key string) (value string, isPresent bool) {
-	value, isPresent = mockEnv.storage[key]
+	value, isPresent = mockEnv.Storage[key]
 	return
 }
 
 func (mockEnv *MockEnv) Environ() (envStrings []string) {
-	envStrings = make([]string, 0, len(mockEnv.storage))
-	for key, value := range mockEnv.storage {
+	envStrings = make([]string, 0, len(mockEnv.Storage))
+	for key, value := range mockEnv.Storage {
 		envString := fmt.Sprintf("%s=%s", key, value)
 		envStrings = append(envStrings, envString)
 	}
@@ -62,5 +62,5 @@ func (mockEnv *MockEnv) Environ() (envStrings []string) {
 }
 
 func (mockEnv *MockEnv) Clearenv() {
-	mockEnv.storage = make(map[string]string)
+	mockEnv.Storage = make(map[string]string)
 }

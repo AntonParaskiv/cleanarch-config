@@ -1,7 +1,6 @@
 package envStorageOs
 
 import (
-	"github.com/pkg/errors"
 	"os"
 	"reflect"
 	"testing"
@@ -11,6 +10,7 @@ const (
 	ErrorResultIsNotEqualToExpect   = "result is not equal to expect"
 	ErrorShouldBeErrorButNotReached = "should be error, but not reached"
 	ErrorSetEnvFailed               = "setenv failed: "
+	ErrorUnSetEnvFailed             = "unsetenv failed: "
 )
 
 var (
@@ -18,7 +18,7 @@ var (
 )
 
 // New
-func TestNew(t *testing.T) {
+func TestOsEnv_New(t *testing.T) {
 	osEnv = New()
 	osEnvExpect := &OsEnv{}
 
@@ -69,7 +69,7 @@ func TestOsEnv_Setenv(t *testing.T) {
 
 	// check var
 	if resultValue := os.Getenv(envKey); resultValue != envValue {
-		t.Error("result is not equal to expect")
+		t.Error(ErrorResultIsNotEqualToExpect)
 		return
 	}
 }
@@ -94,7 +94,7 @@ func TestOsEnv_Unsetenv(t *testing.T) {
 	// unset var
 	err := osEnv.Unsetenv(envKey)
 	if err != nil {
-		t.Error(errors.Errorf("unsetenv failed: %s", err.Error()))
+		t.Error(ErrorUnSetEnvFailed, err.Error())
 		return
 	}
 
@@ -112,7 +112,7 @@ func TestOsEnv_ExpandEnv(t *testing.T) {
 
 	sOut := osEnv.ExpandEnv(sIn)
 	if sOut != sOutExpect {
-		t.Error(errors.Errorf(ErrorResultIsNotEqualToExpect))
+		t.Error(ErrorResultIsNotEqualToExpect)
 		return
 	}
 }
@@ -124,7 +124,7 @@ func TestOsEnv_ExpandEnv2(t *testing.T) {
 
 	sOut := osEnv.ExpandEnv(sIn)
 	if sOut != sOutExpect {
-		t.Error(errors.Errorf(ErrorResultIsNotEqualToExpect))
+		t.Error(ErrorResultIsNotEqualToExpect)
 		return
 	}
 }
@@ -136,11 +136,11 @@ func TestOsEnv_LookupEnv(t *testing.T) {
 
 	envValue, ok := osEnv.LookupEnv(envKey)
 	if !ok {
-		t.Error(errors.Errorf(ErrorResultIsNotEqualToExpect))
+		t.Error(ErrorResultIsNotEqualToExpect)
 		return
 	}
 	if envValue != envValueExpect {
-		t.Error(errors.Errorf(ErrorResultIsNotEqualToExpect))
+		t.Error(ErrorResultIsNotEqualToExpect)
 		return
 	}
 }
@@ -151,7 +151,7 @@ func TestOsEnv_LookupEnv2(t *testing.T) {
 
 	_, ok := osEnv.LookupEnv(envKey)
 	if ok {
-		t.Error(errors.Errorf(ErrorResultIsNotEqualToExpect))
+		t.Error(ErrorResultIsNotEqualToExpect)
 		return
 	}
 }
@@ -162,7 +162,7 @@ func TestMockEnv_Clearenv(t *testing.T) {
 
 	osEnv.Clearenv()
 	if !reflect.DeepEqual(os.Environ(), environExpecct) {
-		t.Error(errors.Errorf(ErrorResultIsNotEqualToExpect))
+		t.Error(ErrorResultIsNotEqualToExpect)
 		return
 	}
 }
@@ -190,7 +190,7 @@ func TestOsEnv_Environ(t *testing.T) {
 
 	vars := osEnv.Environ()
 	if !sameStringSlice(vars, varsExpect) {
-		t.Error(errors.Errorf(ErrorResultIsNotEqualToExpect))
+		t.Error(ErrorResultIsNotEqualToExpect)
 		return
 	}
 }

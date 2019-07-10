@@ -1,7 +1,6 @@
 package envStorageMock
 
 import (
-	"github.com/pkg/errors"
 	"reflect"
 	"testing"
 )
@@ -9,6 +8,8 @@ import (
 const (
 	ErrorResultIsNotEqualToExpect   = "result is not equal to expect"
 	ErrorShouldBeErrorButNotReached = "should be error, but not reached"
+	ErrorSetEnvFailed               = "setenv failed: "
+	ErrorUnSetEnvFailed             = "unsetenv failed: "
 )
 
 var (
@@ -16,11 +17,11 @@ var (
 )
 
 // New
-func TestNew(t *testing.T) {
+func TestMockEnv_New(t *testing.T) {
 	mockEnv = New()
 	mockEnvExpect := &MockEnv{
-		storage:       map[string]string{},
-		simulateError: false,
+		Storage:       map[string]string{},
+		SimulateError: false,
 	}
 
 	if !reflect.DeepEqual(mockEnv, mockEnvExpect) {
@@ -29,9 +30,9 @@ func TestNew(t *testing.T) {
 	}
 
 	// set extra vars for next tests
-	mockEnv.storage["key"] = "value"
-	mockEnv.storage["lorem"] = "ipsum"
-	mockEnv.storage["ilike"] = "gophers"
+	mockEnv.Storage["key"] = "value"
+	mockEnv.Storage["lorem"] = "ipsum"
+	mockEnv.Storage["ilike"] = "gophers"
 }
 
 // Getenv
@@ -60,8 +61,8 @@ func TestMockEnv_Setenv(t *testing.T) {
 	}
 
 	// check var
-	if resultValue := mockEnv.storage[envKey]; resultValue != envValue {
-		t.Error("result is not equal to expect")
+	if resultValue := mockEnv.Storage[envKey]; resultValue != envValue {
+		t.Error(ErrorResultIsNotEqualToExpect)
 		return
 	}
 }
@@ -72,13 +73,13 @@ func TestMockEnv_Setenv2(t *testing.T) {
 	envValue := "bar"
 
 	// set var
-	mockEnv.simulateError = true
+	mockEnv.SimulateError = true
 	err := mockEnv.Setenv(envKey, envValue)
 	if err == nil {
 		t.Error(ErrorShouldBeErrorButNotReached)
 		return
 	}
-	mockEnv.simulateError = false
+	mockEnv.SimulateError = false
 }
 
 // Unset failed
@@ -86,13 +87,13 @@ func TestMockEnv_Unsetenv(t *testing.T) {
 	envKey := "foo"
 
 	// unset var
-	mockEnv.simulateError = true
+	mockEnv.SimulateError = true
 	err := mockEnv.Unsetenv(envKey)
 	if err == nil {
 		t.Error(ErrorShouldBeErrorButNotReached)
 		return
 	}
-	mockEnv.simulateError = false
+	mockEnv.SimulateError = false
 }
 
 // Unset success
@@ -102,12 +103,12 @@ func TestMockEnv_Unsetenv2(t *testing.T) {
 	// unset var
 	err := mockEnv.Unsetenv(envKey)
 	if err != nil {
-		t.Error(errors.Errorf("unsetenv failed: %s", err.Error()))
+		t.Error(ErrorUnSetEnvFailed, err.Error())
 		return
 	}
 
 	// check var
-	if _, ok := mockEnv.storage[envKey]; ok {
+	if _, ok := mockEnv.Storage[envKey]; ok {
 		t.Error(ErrorResultIsNotEqualToExpect)
 		return
 	}
@@ -120,7 +121,7 @@ func TestMockEnv_ExpandEnv(t *testing.T) {
 
 	sOut := mockEnv.ExpandEnv(sIn)
 	if sOut != sOutExpect {
-		t.Error(errors.Errorf(ErrorResultIsNotEqualToExpect))
+		t.Error(ErrorResultIsNotEqualToExpect)
 		return
 	}
 }
@@ -132,7 +133,7 @@ func TestMockEnv_ExpandEnv2(t *testing.T) {
 
 	sOut := mockEnv.ExpandEnv(sIn)
 	if sOut != sOutExpect {
-		t.Error(errors.Errorf(ErrorResultIsNotEqualToExpect))
+		t.Error(ErrorResultIsNotEqualToExpect)
 		return
 	}
 }
@@ -144,11 +145,11 @@ func TestMockEnv_LookupEnv(t *testing.T) {
 
 	envValue, ok := mockEnv.LookupEnv(envKey)
 	if !ok {
-		t.Error(errors.Errorf(ErrorResultIsNotEqualToExpect))
+		t.Error(ErrorResultIsNotEqualToExpect)
 		return
 	}
 	if envValue != envValueExpect {
-		t.Error(errors.Errorf(ErrorResultIsNotEqualToExpect))
+		t.Error(ErrorResultIsNotEqualToExpect)
 		return
 	}
 }
@@ -159,7 +160,7 @@ func TestMockEnv_LookupEnv2(t *testing.T) {
 
 	_, ok := mockEnv.LookupEnv(envKey)
 	if ok {
-		t.Error(errors.Errorf(ErrorResultIsNotEqualToExpect))
+		t.Error(ErrorResultIsNotEqualToExpect)
 		return
 	}
 }
@@ -169,17 +170,17 @@ func TestMockEnv_Clearenv(t *testing.T) {
 	storageExpect := map[string]string{}
 
 	mockEnv.Clearenv()
-	if !reflect.DeepEqual(mockEnv.storage, storageExpect) {
-		t.Error(errors.Errorf(ErrorResultIsNotEqualToExpect))
+	if !reflect.DeepEqual(mockEnv.Storage, storageExpect) {
+		t.Error(ErrorResultIsNotEqualToExpect)
 		return
 	}
 }
 
 // Environ
 func TestMockEnv_Environ(t *testing.T) {
-	mockEnv.storage["key"] = "value"
-	mockEnv.storage["lorem"] = "ipsum"
-	mockEnv.storage["ilike"] = "gophers"
+	mockEnv.Storage["key"] = "value"
+	mockEnv.Storage["lorem"] = "ipsum"
+	mockEnv.Storage["ilike"] = "gophers"
 
 	varsExpect := []string{
 		"key=value",
@@ -189,7 +190,7 @@ func TestMockEnv_Environ(t *testing.T) {
 
 	vars := mockEnv.Environ()
 	if !sameStringSlice(vars, varsExpect) {
-		t.Error(errors.Errorf(ErrorResultIsNotEqualToExpect))
+		t.Error(ErrorResultIsNotEqualToExpect)
 		return
 	}
 }
@@ -223,9 +224,9 @@ func sameStringSlice(x, y []string) bool {
 func BenchmarkNew(b *testing.B) {
 	b.ReportAllocs()
 	mockEnv = New()
-	mockEnv.storage["key"] = "value"
-	mockEnv.storage["lorem"] = "ipsum"
-	mockEnv.storage["ilike"] = "gophers"
+	mockEnv.Storage["key"] = "value"
+	mockEnv.Storage["lorem"] = "ipsum"
+	mockEnv.Storage["ilike"] = "gophers"
 
 	for i := 0; i < b.N; i++ {
 		New()
@@ -248,21 +249,20 @@ func BenchmarkMockEnv_Setenv(b *testing.B) {
 
 func BenchmarkMockEnv_Setenv2(b *testing.B) {
 	b.ReportAllocs()
-	mockEnv.simulateError = true
+	mockEnv.SimulateError = true
 	for i := 0; i < b.N; i++ {
 		mockEnv.Setenv("foo", "bar")
 	}
-	mockEnv.simulateError = false
-
+	mockEnv.SimulateError = false
 }
 
 func BenchmarkMockEnv_Unsetenv(b *testing.B) {
 	b.ReportAllocs()
-	mockEnv.simulateError = true
+	mockEnv.SimulateError = true
 	for i := 0; i < b.N; i++ {
 		mockEnv.Unsetenv("foo")
 	}
-	mockEnv.simulateError = false
+	mockEnv.SimulateError = false
 }
 
 func BenchmarkMockEnv_Unsetenv2(b *testing.B) {
