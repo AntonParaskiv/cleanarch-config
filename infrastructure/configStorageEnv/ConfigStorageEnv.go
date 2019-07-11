@@ -20,27 +20,27 @@ func New(storage EnvStorageInterface) (cse *ConfigStorageEnv) {
 	return
 }
 
-func (cse *ConfigStorageEnv) GetVar(key string) (value string) {
+func (cse *ConfigStorageEnv) Get(key string) (value string) {
 	value = cse.storage.Getenv(key)
 	return
 }
 
-func (cse *ConfigStorageEnv) SetVar(key, value string) (err error) {
+func (cse *ConfigStorageEnv) Set(key, value string) (err error) {
 	err = cse.storage.Setenv(key, value)
 	return
 }
 
-func (cse *ConfigStorageEnv) UnSetVar(key string) (err error) {
+func (cse *ConfigStorageEnv) UnSet(key string) (err error) {
 	err = cse.storage.Unsetenv(key)
 	return
 }
 
-func (cse *ConfigStorageEnv) ExpandVar(sIn string) (sOut string) {
+func (cse *ConfigStorageEnv) Expand(sIn string) (sOut string) {
 	sOut = cse.storage.ExpandEnv(sIn)
 	return
 }
 
-func (cse *ConfigStorageEnv) LookupVar(key string) (value string, isPresent bool) {
+func (cse *ConfigStorageEnv) Lookup(key string) (value string, isPresent bool) {
 	value, isPresent = cse.storage.LookupEnv(key)
 	return
 }
@@ -50,6 +50,6 @@ func (cse *ConfigStorageEnv) Vars() (vars []string) {
 	return
 }
 
-func (cse *ConfigStorageEnv) ClearAllVars() {
+func (cse *ConfigStorageEnv) ClearAll() {
 	cse.storage.Clearenv()
 }

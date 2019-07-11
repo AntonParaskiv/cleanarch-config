@@ -1,9 +1,9 @@
-package config
+package configRepository
 
 import (
 	"errors"
 	"fmt"
-	ConfigInfrastructure "github.com/AntonParaskiv/cleanarch-config/infrastructure/config"
+	ConfigInfrastructure "github.com/AntonParaskiv/cleanarch-config/infrastructure/configStorageEnv"
 	"github.com/adammck/venv"
 	"testing"
 )
@@ -74,7 +74,7 @@ const (
 )
 
 //
-// NewConfigRepository
+// New
 //
 
 func TestNewConfigRepository(t *testing.T) {
@@ -83,8 +83,8 @@ func TestNewConfigRepository(t *testing.T) {
 	storage = venv.Mock()
 
 	// create storage and repo
-	configStorage = ConfigInfrastructure.NewConfigStorageEnv(storage)
-	configRepository = NewConfigRepository(configStorage, loggerMock)
+	configStorage = ConfigInfrastructure.New(storage)
+	configRepository = New(configStorage, loggerMock)
 }
 
 //
@@ -609,7 +609,7 @@ func TestConfigRepository_GetFloat645(t *testing.T) {
 }
 
 //
-// ClearAllVars
+// ClearAll
 //
 
 func TestConfigRepository_ClearAllVars(t *testing.T) {
@@ -620,7 +620,7 @@ func TestConfigRepository_ClearAllVars(t *testing.T) {
 	}
 
 	// clear vars
-	configRepository.ClearAllVars()
+	configRepository.ClearAll()
 
 	// check mock
 	mockVars := storage.Environ()

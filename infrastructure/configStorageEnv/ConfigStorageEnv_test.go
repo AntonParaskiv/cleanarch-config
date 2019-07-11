@@ -9,8 +9,8 @@ import (
 const (
 	ErrorResultIsNotEqualToExpect   = "result is not equal to expect"
 	ErrorShouldBeErrorButNotReached = "should be error, but not reached"
-	ErrorSetVarFailed               = "set var failed: "
-	ErrorUnSetVarFailed             = "unset var failed: "
+	ErrorSetFailed                  = "set failed: "
+	ErrorUnSetFailed                = "unset failed: "
 )
 
 var (
@@ -37,12 +37,12 @@ func TestConfigStorageEnv_New(t *testing.T) {
 }
 
 // get
-func TestConfigStorageEnv_GetVar(t *testing.T) {
+func TestConfigStorageEnv_Get(t *testing.T) {
 	envKey := "key"
 	envValueExpect := "value"
 
 	// get var
-	resultValue := configStorageEnv.GetVar(envKey)
+	resultValue := configStorageEnv.Get(envKey)
 	if resultValue != envValueExpect {
 		t.Error(ErrorResultIsNotEqualToExpect)
 		return
@@ -50,13 +50,13 @@ func TestConfigStorageEnv_GetVar(t *testing.T) {
 }
 
 // Set success
-func TestConfigStorageEnv_SetVar(t *testing.T) {
+func TestConfigStorageEnv_Set(t *testing.T) {
 	envKey := "foo"
 	envValue := "bar"
 
 	// set var
-	if err := configStorageEnv.SetVar(envKey, envValue); err != nil {
-		t.Error(ErrorSetVarFailed + err.Error())
+	if err := configStorageEnv.Set(envKey, envValue); err != nil {
+		t.Error(ErrorSetFailed + err.Error())
 		return
 	}
 
@@ -68,13 +68,13 @@ func TestConfigStorageEnv_SetVar(t *testing.T) {
 }
 
 // Set failed
-func TestConfigStorageEnv_SetVar2(t *testing.T) {
+func TestConfigStorageEnv_Set2(t *testing.T) {
 	envKey := "foo"
 	envValue := "bar"
 
 	// set var
 	envStorage.SimulateError = true
-	if err := configStorageEnv.SetVar(envKey, envValue); err == nil {
+	if err := configStorageEnv.Set(envKey, envValue); err == nil {
 		t.Error(ErrorShouldBeErrorButNotReached)
 		return
 	}
@@ -82,12 +82,12 @@ func TestConfigStorageEnv_SetVar2(t *testing.T) {
 }
 
 // Unset failed
-func TestConfigStorageEnv_UnSetVar(t *testing.T) {
+func TestConfigStorageEnv_UnSet(t *testing.T) {
 	envKey := "foo"
 
 	// unset var
 	envStorage.SimulateError = true
-	err := configStorageEnv.UnSetVar(envKey)
+	err := configStorageEnv.UnSet(envKey)
 	if err == nil {
 		t.Error(ErrorShouldBeErrorButNotReached)
 		return
@@ -96,13 +96,13 @@ func TestConfigStorageEnv_UnSetVar(t *testing.T) {
 }
 
 // Unset success
-func TestConfigStorageEnv_UnSetVar2(t *testing.T) {
+func TestConfigStorageEnv_UnSet2(t *testing.T) {
 	envKey := "foo"
 
 	// unset var
-	err := configStorageEnv.UnSetVar(envKey)
+	err := configStorageEnv.UnSet(envKey)
 	if err != nil {
-		t.Error(ErrorUnSetVarFailed, err.Error())
+		t.Error(ErrorUnSetFailed, err.Error())
 		return
 	}
 
@@ -114,11 +114,11 @@ func TestConfigStorageEnv_UnSetVar2(t *testing.T) {
 }
 
 // Expand exist
-func TestConfigStorageEnv_ExpandVar(t *testing.T) {
+func TestConfigStorageEnv_Expand(t *testing.T) {
 	sIn := "${ilike} are my favorite animals"
 	sOutExpect := "gophers are my favorite animals"
 
-	sOut := configStorageEnv.ExpandVar(sIn)
+	sOut := configStorageEnv.Expand(sIn)
 	if sOut != sOutExpect {
 		t.Error(ErrorResultIsNotEqualToExpect)
 		return
@@ -126,11 +126,11 @@ func TestConfigStorageEnv_ExpandVar(t *testing.T) {
 }
 
 // Expand not exist
-func TestConfigStorageEnv_ExpandVar2(t *testing.T) {
+func TestConfigStorageEnv_Expand2(t *testing.T) {
 	sIn := "I hate ${nobody}"
 	sOutExpect := "I hate "
 
-	sOut := configStorageEnv.ExpandVar(sIn)
+	sOut := configStorageEnv.Expand(sIn)
 	if sOut != sOutExpect {
 		t.Error(ErrorResultIsNotEqualToExpect)
 		return
@@ -138,11 +138,11 @@ func TestConfigStorageEnv_ExpandVar2(t *testing.T) {
 }
 
 // Lookup exist
-func TestConfigStorageEnv_LookupVar(t *testing.T) {
+func TestConfigStorageEnv_Lookup(t *testing.T) {
 	envKey := "ilike"
 	envValueExpect := "gophers"
 
-	envValue, ok := configStorageEnv.LookupVar(envKey)
+	envValue, ok := configStorageEnv.Lookup(envKey)
 	if !ok {
 		t.Error(ErrorResultIsNotEqualToExpect)
 		return
@@ -154,10 +154,10 @@ func TestConfigStorageEnv_LookupVar(t *testing.T) {
 }
 
 // Lookup not exist
-func TestConfigStorageEnv_LookupVar2(t *testing.T) {
+func TestConfigStorageEnv_Lookup2(t *testing.T) {
 	envKey := "ihate"
 
-	_, ok := configStorageEnv.LookupVar(envKey)
+	_, ok := configStorageEnv.Lookup(envKey)
 	if ok {
 		t.Error(ErrorResultIsNotEqualToExpect)
 		return
@@ -165,18 +165,18 @@ func TestConfigStorageEnv_LookupVar2(t *testing.T) {
 }
 
 // Clearenv
-func TestConfigStorageEnv_ClearAllVars(t *testing.T) {
+func TestConfigStorageEnv_ClearAll(t *testing.T) {
 	storageExpect := map[string]string{}
 
-	configStorageEnv.ClearAllVars()
+	configStorageEnv.ClearAll()
 	if !reflect.DeepEqual(envStorage.Storage, storageExpect) {
 		t.Error(ErrorResultIsNotEqualToExpect)
 		return
 	}
 }
 
-// Environ
-func TestMockEnv_Environ(t *testing.T) {
+// Vars
+func TestMockEnv_Vars(t *testing.T) {
 	envStorage.Storage["key"] = "value"
 	envStorage.Storage["lorem"] = "ipsum"
 	envStorage.Storage["ilike"] = "gophers"
@@ -235,83 +235,83 @@ func BenchmarkNewConfigStorageEnv(b *testing.B) {
 	}
 }
 
-func BenchmarkConfigStorageEnv_GetVar(b *testing.B) {
+func BenchmarkConfigStorageEnv_Get(b *testing.B) {
 	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
-		configStorageEnv.GetVar("key")
+		configStorageEnv.Get("key")
 	}
 }
 
-func BenchmarkConfigStorageEnv_SetVar(b *testing.B) {
+func BenchmarkConfigStorageEnv_Set(b *testing.B) {
 	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
-		configStorageEnv.SetVar("foo", "bar")
+		configStorageEnv.Set("foo", "bar")
 	}
 }
 
-func BenchmarkConfigStorageEnv_SetVar2(b *testing.B) {
+func BenchmarkConfigStorageEnv_Set2(b *testing.B) {
 	b.ReportAllocs()
 	envStorage.SimulateError = true
 	for i := 0; i < b.N; i++ {
-		configStorageEnv.SetVar("foo", "bar")
+		configStorageEnv.Set("foo", "bar")
 	}
 	envStorage.SimulateError = false
 }
 
-func BenchmarkConfigStorageEnv_UnSetVar(b *testing.B) {
+func BenchmarkConfigStorageEnv_UnSet(b *testing.B) {
 	b.ReportAllocs()
 	envStorage.SimulateError = true
 	for i := 0; i < b.N; i++ {
-		configStorageEnv.UnSetVar("foo")
+		configStorageEnv.UnSet("foo")
 	}
 	envStorage.SimulateError = false
 }
 
-func BenchmarkConfigStorageEnv_UnSetVar2(b *testing.B) {
+func BenchmarkConfigStorageEnv_UnSet2(b *testing.B) {
 	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
-		configStorageEnv.UnSetVar("foo")
+		configStorageEnv.UnSet("foo")
 	}
 }
 
-func BenchmarkConfigStorageEnv_ExpandVar(b *testing.B) {
+func BenchmarkConfigStorageEnv_Expand(b *testing.B) {
 	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
-		configStorageEnv.ExpandVar("${ilike} are my favorite animals")
+		configStorageEnv.Expand("${ilike} are my favorite animals")
 	}
 }
 
-func BenchmarkConfigStorageEnv_ExpandVar2(b *testing.B) {
+func BenchmarkConfigStorageEnv_Expand2(b *testing.B) {
 	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
-		configStorageEnv.ExpandVar("I hate ${nobody}")
+		configStorageEnv.Expand("I hate ${nobody}")
 	}
 }
 
-func BenchmarkConfigStorageEnv_LookupVar(b *testing.B) {
+func BenchmarkConfigStorageEnv_Lookup(b *testing.B) {
 	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
-		configStorageEnv.LookupVar("ilike")
+		configStorageEnv.Lookup("ilike")
 	}
 }
 
-func BenchmarkConfigStorageEnv_LookupVar2(b *testing.B) {
+func BenchmarkConfigStorageEnv_Lookup2(b *testing.B) {
 	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
-		configStorageEnv.LookupVar("ihate")
+		configStorageEnv.Lookup("ihate")
 	}
 }
 
-func BenchmarkConfigStorageEnv_EnvironVars(b *testing.B) {
+func BenchmarkConfigStorageEnv_Vars(b *testing.B) {
 	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
 		configStorageEnv.Vars()
 	}
 }
 
-func BenchmarkConfigStorageEnv_ClearAllVars(b *testing.B) {
+func BenchmarkConfigStorageEnv_ClearAll(b *testing.B) {
 	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
-		configStorageEnv.ClearAllVars()
+		configStorageEnv.ClearAll()
 	}
 }
