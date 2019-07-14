@@ -1,6 +1,6 @@
 package configStorageEnv
 
-type EnvStorageInterface interface {
+type EnvStorage interface {
 	Getenv(key string) (value string)
 	Setenv(key, value string) (err error)
 	Unsetenv(key string) (err error)
@@ -11,10 +11,10 @@ type EnvStorageInterface interface {
 }
 
 type ConfigStorageEnv struct {
-	storage EnvStorageInterface
+	storage EnvStorage
 }
 
-func New(storage EnvStorageInterface) (cse *ConfigStorageEnv) {
+func New(storage EnvStorage) (cse *ConfigStorageEnv) {
 	cse = new(ConfigStorageEnv)
 	cse.storage = storage
 	return
