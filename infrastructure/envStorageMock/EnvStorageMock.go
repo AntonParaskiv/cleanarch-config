@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/pkg/errors"
 	"os"
+	"syscall"
 )
 
 const ErrorSimulated = "simulated error"
@@ -29,6 +30,21 @@ func (mockEnv *MockEnv) Setenv(key, value string) (err error) {
 		err = errors.Errorf(ErrorSimulated)
 		return
 	}
+
+	if len(key) == 0 {
+		return syscall.EINVAL
+	}
+	for i := 0; i < len(key); i++ {
+		if key[i] == '=' || key[i] == 0 {
+			return syscall.EINVAL
+		}
+	}
+	for i := 0; i < len(value); i++ {
+		if value[i] == 0 {
+			return syscall.EINVAL
+		}
+	}
+
 	mockEnv.Storage[key] = value
 	return
 }
