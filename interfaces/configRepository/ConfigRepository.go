@@ -135,7 +135,7 @@ func (r *ConfigRepository) GetFloat64(key string) (value float64, err error) {
 
 func (r *ConfigRepository) SetString(key, value string) (err error) {
 	valueString := value
-	if err := r.storage.Set(key, valueString); err != nil {
+	if err = r.storage.Set(key, valueString); err != nil {
 		err = errors.Errorf(ErrorSetFailed, err.Error())
 	}
 	return
@@ -143,7 +143,7 @@ func (r *ConfigRepository) SetString(key, value string) (err error) {
 
 func (r *ConfigRepository) SetBool(key string, value bool) (err error) {
 	valueString := fmt.Sprintf("%t", value)
-	if err := r.storage.Set(key, valueString); err != nil {
+	if err = r.storage.Set(key, valueString); err != nil {
 		err = errors.Errorf(ErrorSetFailed, err.Error())
 	}
 	return
@@ -151,7 +151,7 @@ func (r *ConfigRepository) SetBool(key string, value bool) (err error) {
 
 func (r *ConfigRepository) SetInt64(key string, value int64) (err error) {
 	valueString := fmt.Sprintf("%d", value)
-	if err := r.storage.Set(key, valueString); err != nil {
+	if err = r.storage.Set(key, valueString); err != nil {
 		err = errors.Errorf(ErrorSetFailed, err.Error())
 	}
 	return
@@ -159,7 +159,7 @@ func (r *ConfigRepository) SetInt64(key string, value int64) (err error) {
 
 func (r *ConfigRepository) SetUint64(key string, value uint64) (err error) {
 	valueString := fmt.Sprintf("%d", value)
-	if err := r.storage.Set(key, valueString); err != nil {
+	if err = r.storage.Set(key, valueString); err != nil {
 		err = errors.Errorf(ErrorSetFailed, err.Error())
 	}
 	return
@@ -167,7 +167,7 @@ func (r *ConfigRepository) SetUint64(key string, value uint64) (err error) {
 
 func (r *ConfigRepository) SetFloat64(key string, value float64) (err error) {
 	valueString := fmt.Sprintf("%f", value)
-	if err := r.storage.Set(key, valueString); err != nil {
+	if err = r.storage.Set(key, valueString); err != nil {
 		err = errors.Errorf(ErrorSetFailed, err.Error())
 	}
 	return

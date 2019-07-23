@@ -4,15 +4,9 @@ import (
 	"fmt"
 	ConfigInfrastructure "github.com/AntonParaskiv/cleanarch-config/infrastructure/configStorageEnv"
 	"github.com/AntonParaskiv/cleanarch-config/infrastructure/envStorageMock"
+	"github.com/davecgh/go-spew/spew"
 	"reflect"
 	"testing"
-)
-
-const (
-	ErrorResultIsNotEqualToExpect   = "result is not equal to expect"
-	ErrorShouldBeErrorButNotReached = "should be error, but not reached"
-	ErrorStorageSetFailed           = "storage set failed: "
-	//ErrorUnSetFailed                = "unset failed: "
 )
 
 type LoggerMock struct {
@@ -59,392 +53,1305 @@ func (lm *LoggerMock) Fatalf(format string, a ...interface{}) {
 	lm.message = fmt.Sprintf(format, fmt.Sprint(a...))
 }
 
-var (
-	varStorage       ConfigInfrastructure.EnvStorage
-	configStorage    ConfigStorage
-	configRepository *ConfigRepository
-	loggerMock       *LoggerMock
-)
-
-const (
-//testKey1   = "key1"
-//testValue1 = "string"
-//testKey2   = "key2"
-//testValue2 = "true"
-//testKey3   = "key3"
-//testValue3 = "value3"
-
-//envVarName1  = "TEST_VAR_1"
-//	envVarName2  = "TEST_VAR_2"
-//	envVarName3  = "TEST_VAR_3"
-//	envVarName4  = "TEST_VAR_4"
-//	envVarName5  = "TEST_VAR_5"
-//	envVarName6  = "TEST_VAR_6"
-//	envVarName7  = "TEST_VAR_7"
-//	envVarName8  = "TEST_VAR_8"
-//	envVarName9  = "TEST_VAR_9"
-//	envVarName10 = "TEST_VAR_10"
-//	envVarName11 = "TEST_VAR_11"
-)
-
-func TestConfigRepository_New(t *testing.T) {
-	varStorage = envStorageMock.New()
-	configStorage = ConfigInfrastructure.New(varStorage)
-	loggerMock = &LoggerMock{}
-
-	configRepositoryExpect := &ConfigRepository{
-		storage: configStorage,
-		Log:     loggerMock,
+func TestNew(t *testing.T) {
+	type args struct {
+		storage ConfigStorage
+		log     Logger
 	}
-
-	// new repository
-	configRepository = New(configStorage, loggerMock)
-	if !reflect.DeepEqual(configRepository, configRepositoryExpect) {
-		t.Error(ErrorResultIsNotEqualToExpect)
-		return
+	tests := []struct {
+		name   string
+		args   args
+		wantCr *ConfigRepository
+	}{
+		{
+			name: "Success",
+			args: args{
+				storage: ConfigInfrastructure.New(envStorageMock.New()),
+				log:     new(LoggerMock),
+			},
+			wantCr: &ConfigRepository{
+				storage: ConfigInfrastructure.New(envStorageMock.New()),
+				Log:     new(LoggerMock),
+			},
+		},
 	}
-
-	//// set extra vars for next tests
-	//if err := varStorage.Setenv(testKey1, testValue1); err != nil {
-	//	t.Error(ErrorStorageSetFailed, testKey1)
-	//	return
-	//}
-	//if err := varStorage.Setenv(testKey2, testValue2); err != nil {
-	//	t.Error(ErrorStorageSetFailed, testKey2)
-	//	return
-	//}
-	//if err := varStorage.Setenv(testKey3, testValue3); err != nil {
-	//	t.Error(ErrorStorageSetFailed, testKey3)
-	//	return
-	//}
-
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if gotCr := New(tt.args.storage, tt.args.log); !reflect.DeepEqual(gotCr, tt.wantCr) {
+				t.Errorf("New() = %v, want %v", gotCr, tt.wantCr)
+			}
+		})
+	}
 }
 
-// lookup string is present
+func TestConfigRepository_lookupString(t *testing.T) {
+	type fields struct {
+		storage ConfigStorage
+		Log     Logger
+	}
+	type args struct {
+		key string
+	}
+	tests := []struct {
+		name          string
+		fields        fields
+		args          args
+		wantValue     string
+		wantIsPresent bool
+	}{
+		{
+			name: "IsPresent",
+			fields: fields{
+				storage: ConfigInfrastructure.New(envStorageMock.New().SetStorageMap(map[string]string{"key": "value"})),
+				Log:     new(LoggerMock),
+			},
+			args: args{
+				key: "key",
+			},
+			wantValue:     "value",
+			wantIsPresent: true,
+		},
+		{
+			name: "IsNotPresent",
+			fields: fields{
+				storage: ConfigInfrastructure.New(envStorageMock.New()),
+				Log:     new(LoggerMock),
+			},
+			args: args{
+				key: "key",
+			},
+			wantValue:     "",
+			wantIsPresent: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			r := &ConfigRepository{
+				storage: tt.fields.storage,
+				Log:     tt.fields.Log,
+			}
+			gotValue, gotIsPresent := r.lookupString(tt.args.key)
+			if gotValue != tt.wantValue {
+				t.Errorf("ConfigRepository.lookupString() gotValue = %v, want %v", gotValue, tt.wantValue)
+			}
+			if gotIsPresent != tt.wantIsPresent {
+				t.Errorf("ConfigRepository.lookupString() gotIsPresent = %v, want %v", gotIsPresent, tt.wantIsPresent)
+			}
+		})
+	}
+}
+
 func TestConfigRepository_LookupString(t *testing.T) {
-	keyStorage := "key10"
-	valueStorage := "value10"
-	valueExpect := valueStorage
-	isPresentExpect := true
-
-	// storage set
-	if err := configStorage.Set(keyStorage, valueStorage); err != nil {
-		t.Error(ErrorStorageSetFailed, err.Error())
-		return
+	type fields struct {
+		storage ConfigStorage
+		Log     Logger
 	}
-
-	// get & check result
-	value, isPresent := configRepository.LookupString(keyStorage)
-	if value != valueExpect {
-		t.Error(ErrorResultIsNotEqualToExpect)
+	type args struct {
+		key string
 	}
-	if isPresent != isPresentExpect {
-		t.Error(ErrorResultIsNotEqualToExpect)
+	tests := []struct {
+		name          string
+		fields        fields
+		args          args
+		wantValue     string
+		wantIsPresent bool
+	}{
+		{
+			name: "IsPresent",
+			fields: fields{
+				storage: ConfigInfrastructure.New(envStorageMock.New().SetStorageMap(map[string]string{"key": "value"})),
+				Log:     new(LoggerMock),
+			},
+			args: args{
+				key: "key",
+			},
+			wantValue:     "value",
+			wantIsPresent: true,
+		},
+		{
+			name: "IsNotPresent",
+			fields: fields{
+				storage: ConfigInfrastructure.New(envStorageMock.New()),
+				Log:     new(LoggerMock),
+			},
+			args: args{
+				key: "key",
+			},
+			wantValue:     "",
+			wantIsPresent: false,
+		},
 	}
-	return
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			r := &ConfigRepository{
+				storage: tt.fields.storage,
+				Log:     tt.fields.Log,
+			}
+			gotValue, gotIsPresent := r.LookupString(tt.args.key)
+			if gotValue != tt.wantValue {
+				t.Errorf("ConfigRepository.LookupString() gotValue = %v, want %v", gotValue, tt.wantValue)
+			}
+			if gotIsPresent != tt.wantIsPresent {
+				t.Errorf("ConfigRepository.LookupString() gotIsPresent = %v, want %v", gotIsPresent, tt.wantIsPresent)
+			}
+		})
+	}
 }
 
-// lookup string is not present
-func TestConfigRepository_LookupString2(t *testing.T) {
-	keyStorage := "key20"
-	valueExpect := ""
-	isPresentExpect := false
-
-	// get & check result
-	value, isPresent := configRepository.LookupString(keyStorage)
-	if value != valueExpect {
-		t.Error(ErrorResultIsNotEqualToExpect)
-	}
-	if isPresent != isPresentExpect {
-		t.Error(ErrorResultIsNotEqualToExpect)
-	}
-	return
-}
-
-// lookup bool is present
 func TestConfigRepository_LookupBool(t *testing.T) {
-	keyStorage := "key30"
-	valueStorage := "true"
-	valueExpect := true
-	isPresentExpect := true
-
-	// storage set
-	if err := configStorage.Set(keyStorage, valueStorage); err != nil {
-		t.Error(ErrorStorageSetFailed, err.Error())
-		return
+	type fields struct {
+		storage ConfigStorage
+		Log     Logger
 	}
-
-	// get & check result
-	value, isPresent, err := configRepository.LookupBool(keyStorage)
-	if err != nil {
-		t.Error(ErrorResultIsNotEqualToExpect)
+	type args struct {
+		key string
 	}
-	if value != valueExpect {
-		t.Error(ErrorResultIsNotEqualToExpect)
+	tests := []struct {
+		name          string
+		fields        fields
+		args          args
+		wantValue     bool
+		wantIsPresent bool
+		wantErr       bool
+	}{
+		{
+			name: "IsPresentTrue",
+			fields: fields{
+				storage: ConfigInfrastructure.New(envStorageMock.New().SetStorageMap(map[string]string{"key": "true"})),
+				Log:     new(LoggerMock),
+			},
+			args: args{
+				key: "key",
+			},
+			wantValue:     true,
+			wantIsPresent: true,
+		},
+		{
+			name: "IsPresentFalse",
+			fields: fields{
+				storage: ConfigInfrastructure.New(envStorageMock.New().SetStorageMap(map[string]string{"key": "false"})),
+				Log:     new(LoggerMock),
+			},
+			args: args{
+				key: "key",
+			},
+			wantValue:     false,
+			wantIsPresent: true,
+		},
+		{
+			name: "IsNotPresent",
+			fields: fields{
+				storage: ConfigInfrastructure.New(envStorageMock.New()),
+				Log:     new(LoggerMock),
+			},
+			args: args{
+				key: "key",
+			},
+			wantValue:     false,
+			wantIsPresent: false,
+		},
+		{
+			name: "ParseErr",
+			fields: fields{
+				storage: ConfigInfrastructure.New(envStorageMock.New().SetStorageMap(map[string]string{"key": "value"})),
+				Log:     new(LoggerMock),
+			},
+			args: args{
+				key: "key",
+			},
+			wantIsPresent: true,
+			wantErr:       true,
+		},
 	}
-	if isPresent != isPresentExpect {
-		t.Error(ErrorResultIsNotEqualToExpect)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			r := &ConfigRepository{
+				storage: tt.fields.storage,
+				Log:     tt.fields.Log,
+			}
+			gotValue, gotIsPresent, err := r.LookupBool(tt.args.key)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("ConfigRepository.LookupBool() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if gotValue != tt.wantValue {
+				t.Errorf("ConfigRepository.LookupBool() gotValue = %v, want %v", gotValue, tt.wantValue)
+			}
+			if gotIsPresent != tt.wantIsPresent {
+				t.Errorf("ConfigRepository.LookupBool() gotIsPresent = %v, want %v", gotIsPresent, tt.wantIsPresent)
+			}
+		})
 	}
-	return
 }
 
-// lookup bool is not present
-func TestConfigRepository_LookupBool2(t *testing.T) {
-	keyStorage := "key40"
-	valueExpect := false
-	isPresentExpect := false
-
-	// get & check result
-	value, isPresent, err := configRepository.LookupBool(keyStorage)
-	if err != nil {
-		t.Error(ErrorResultIsNotEqualToExpect)
-	}
-	if value != valueExpect {
-		t.Error(ErrorResultIsNotEqualToExpect)
-	}
-	if isPresent != isPresentExpect {
-		t.Error(ErrorResultIsNotEqualToExpect)
-	}
-	return
-}
-
-// lookup bool err parse
-func TestConfigRepository_LookupBool3(t *testing.T) {
-	keyStorage := "key50"
-	valueStorage := "tru"
-
-	// storage set
-	if err := configStorage.Set(keyStorage, valueStorage); err != nil {
-		t.Error(ErrorStorageSetFailed, err.Error())
-		return
-	}
-
-	// get & check result
-	_, _, err := configRepository.LookupBool(keyStorage)
-	if err == nil {
-		t.Error(ErrorShouldBeErrorButNotReached)
-	}
-	return
-}
-
-// lookup int64 is present
 func TestConfigRepository_LookupInt64(t *testing.T) {
-	keyStorage := "key60"
-	valueStorage := "-128"
-	valueExpect := int64(-128)
-	isPresentExpect := true
-
-	// storage set
-	if err := configStorage.Set(keyStorage, valueStorage); err != nil {
-		t.Error(ErrorStorageSetFailed, err.Error())
-		return
+	type fields struct {
+		storage ConfigStorage
+		Log     Logger
 	}
-
-	// get & check result
-	value, isPresent, err := configRepository.LookupInt64(keyStorage)
-	if err != nil {
-		t.Error(ErrorResultIsNotEqualToExpect)
+	type args struct {
+		key string
 	}
-	if value != valueExpect {
-		t.Error(ErrorResultIsNotEqualToExpect)
+	tests := []struct {
+		name          string
+		fields        fields
+		args          args
+		wantValue     int64
+		wantIsPresent bool
+		wantErr       bool
+	}{
+		{
+			name: "IsPresent",
+			fields: fields{
+				storage: ConfigInfrastructure.New(envStorageMock.New().SetStorageMap(map[string]string{"key": "-1000"})),
+				Log:     new(LoggerMock),
+			},
+			args: args{
+				key: "key",
+			},
+			wantValue:     -1000,
+			wantIsPresent: true,
+		},
+		{
+			name: "IsNotPresent",
+			fields: fields{
+				storage: ConfigInfrastructure.New(envStorageMock.New()),
+				Log:     new(LoggerMock),
+			},
+			args: args{
+				key: "key",
+			},
+			wantValue:     0,
+			wantIsPresent: false,
+		},
+		{
+			name: "ParseErr",
+			fields: fields{
+				storage: ConfigInfrastructure.New(envStorageMock.New().SetStorageMap(map[string]string{"key": "value"})),
+				Log:     new(LoggerMock),
+			},
+			args: args{
+				key: "key",
+			},
+			wantIsPresent: true,
+			wantErr:       true,
+		},
 	}
-	if isPresent != isPresentExpect {
-		t.Error(ErrorResultIsNotEqualToExpect)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			r := &ConfigRepository{
+				storage: tt.fields.storage,
+				Log:     tt.fields.Log,
+			}
+			gotValue, gotIsPresent, err := r.LookupInt64(tt.args.key)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("ConfigRepository.LookupInt64() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if gotValue != tt.wantValue {
+				t.Errorf("ConfigRepository.LookupInt64() gotValue = %v, want %v", gotValue, tt.wantValue)
+			}
+			if gotIsPresent != tt.wantIsPresent {
+				t.Errorf("ConfigRepository.LookupInt64() gotIsPresent = %v, want %v", gotIsPresent, tt.wantIsPresent)
+			}
+		})
 	}
-	return
 }
 
-// lookup int64 is not present
-func TestConfigRepository_LookupInt642(t *testing.T) {
-	keyStorage := "key70"
-	valueExpect := int64(0)
-	isPresentExpect := false
-
-	// get & check result
-	value, isPresent, err := configRepository.LookupInt64(keyStorage)
-	if err != nil {
-		t.Error(ErrorResultIsNotEqualToExpect)
-	}
-	if value != valueExpect {
-		t.Error(ErrorResultIsNotEqualToExpect)
-	}
-	if isPresent != isPresentExpect {
-		t.Error(ErrorResultIsNotEqualToExpect)
-	}
-	return
-}
-
-// lookup int64 err parse
-func TestConfigRepository_LookupInt643(t *testing.T) {
-	keyStorage := "key80"
-	valueStorage := "value80"
-
-	// storage set
-	if err := configStorage.Set(keyStorage, valueStorage); err != nil {
-		t.Error(ErrorStorageSetFailed, err.Error())
-		return
-	}
-
-	// get & check result
-	_, _, err := configRepository.LookupInt64(keyStorage)
-	if err == nil {
-		t.Error(ErrorShouldBeErrorButNotReached)
-	}
-	return
-}
-
-// lookup uint64 is present
 func TestConfigRepository_LookupUint64(t *testing.T) {
-	keyStorage := "key90"
-	valueStorage := "128"
-	valueExpect := uint64(128)
-	isPresentExpect := true
-
-	// storage set
-	if err := configStorage.Set(keyStorage, valueStorage); err != nil {
-		t.Error(ErrorStorageSetFailed, err.Error())
-		return
+	type fields struct {
+		storage ConfigStorage
+		Log     Logger
 	}
-
-	// get & check result
-	value, isPresent, err := configRepository.LookupUint64(keyStorage)
-	if err != nil {
-		t.Error(ErrorResultIsNotEqualToExpect)
+	type args struct {
+		key string
 	}
-	if value != valueExpect {
-		t.Error(ErrorResultIsNotEqualToExpect)
+	tests := []struct {
+		name          string
+		fields        fields
+		args          args
+		wantValue     uint64
+		wantIsPresent bool
+		wantErr       bool
+	}{
+		{
+			name: "IsPresent",
+			fields: fields{
+				storage: ConfigInfrastructure.New(envStorageMock.New().SetStorageMap(map[string]string{"key": "1000"})),
+				Log:     new(LoggerMock),
+			},
+			args: args{
+				key: "key",
+			},
+			wantValue:     1000,
+			wantIsPresent: true,
+		},
+		{
+			name: "IsNotPresent",
+			fields: fields{
+				storage: ConfigInfrastructure.New(envStorageMock.New()),
+				Log:     new(LoggerMock),
+			},
+			args: args{
+				key: "key",
+			},
+			wantValue:     0,
+			wantIsPresent: false,
+		},
+		{
+			name: "ParseErr",
+			fields: fields{
+				storage: ConfigInfrastructure.New(envStorageMock.New().SetStorageMap(map[string]string{"key": "value"})),
+				Log:     new(LoggerMock),
+			},
+			args: args{
+				key: "key",
+			},
+			wantIsPresent: true,
+			wantErr:       true,
+		},
 	}
-	if isPresent != isPresentExpect {
-		t.Error(ErrorResultIsNotEqualToExpect)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			r := &ConfigRepository{
+				storage: tt.fields.storage,
+				Log:     tt.fields.Log,
+			}
+			gotValue, gotIsPresent, err := r.LookupUint64(tt.args.key)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("ConfigRepository.LookupUint64() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if gotValue != tt.wantValue {
+				t.Errorf("ConfigRepository.LookupUint64() gotValue = %v, want %v", gotValue, tt.wantValue)
+			}
+			if gotIsPresent != tt.wantIsPresent {
+				t.Errorf("ConfigRepository.LookupUint64() gotIsPresent = %v, want %v", gotIsPresent, tt.wantIsPresent)
+			}
+		})
 	}
-	return
 }
 
-// lookup uint64 is not present
-func TestConfigRepository_LookupUint642(t *testing.T) {
-	keyStorage := "key100"
-	valueExpect := uint64(0)
-	isPresentExpect := false
-
-	// get & check result
-	value, isPresent, err := configRepository.LookupUint64(keyStorage)
-	if err != nil {
-		t.Error(ErrorResultIsNotEqualToExpect)
-	}
-	if value != valueExpect {
-		t.Error(ErrorResultIsNotEqualToExpect)
-	}
-	if isPresent != isPresentExpect {
-		t.Error(ErrorResultIsNotEqualToExpect)
-	}
-	return
-}
-
-// lookup uint64 err parse
-func TestConfigRepository_LookupUint643(t *testing.T) {
-	keyStorage := "key110"
-	valueStorage := "value110"
-
-	// storage set
-	if err := configStorage.Set(keyStorage, valueStorage); err != nil {
-		t.Error(ErrorStorageSetFailed, err.Error())
-		return
-	}
-
-	// get & check result
-	_, _, err := configRepository.LookupUint64(keyStorage)
-	if err == nil {
-		t.Error(ErrorShouldBeErrorButNotReached)
-	}
-	return
-}
-
-// lookup float64 is present
 func TestConfigRepository_LookupFloat64(t *testing.T) {
-	keyStorage := "key120"
-	valueStorage := "120.12345"
-	valueExpect := float64(120.12345)
-	isPresentExpect := true
-
-	// storage set
-	if err := configStorage.Set(keyStorage, valueStorage); err != nil {
-		t.Error(ErrorStorageSetFailed, err.Error())
-		return
+	type fields struct {
+		storage ConfigStorage
+		Log     Logger
 	}
-
-	// get & check result
-	value, isPresent, err := configRepository.LookupFloat64(keyStorage)
-	if err != nil {
-		t.Error(ErrorResultIsNotEqualToExpect)
+	type args struct {
+		key string
 	}
-	if value != valueExpect {
-		t.Error(ErrorResultIsNotEqualToExpect)
+	tests := []struct {
+		name          string
+		fields        fields
+		args          args
+		wantValue     float64
+		wantIsPresent bool
+		wantErr       bool
+	}{
+		{
+			name: "IsPresent",
+			fields: fields{
+				storage: ConfigInfrastructure.New(envStorageMock.New().SetStorageMap(map[string]string{"key": "3.14"})),
+				Log:     new(LoggerMock),
+			},
+			args: args{
+				key: "key",
+			},
+			wantValue:     3.14,
+			wantIsPresent: true,
+		},
+		{
+			name: "IsNotPresent",
+			fields: fields{
+				storage: ConfigInfrastructure.New(envStorageMock.New()),
+				Log:     new(LoggerMock),
+			},
+			args: args{
+				key: "key",
+			},
+			wantValue:     0,
+			wantIsPresent: false,
+		},
+		{
+			name: "ParseErr",
+			fields: fields{
+				storage: ConfigInfrastructure.New(envStorageMock.New().SetStorageMap(map[string]string{"key": "value"})),
+				Log:     new(LoggerMock),
+			},
+			args: args{
+				key: "key",
+			},
+			wantIsPresent: true,
+			wantErr:       true,
+		},
 	}
-	if isPresent != isPresentExpect {
-		t.Error(ErrorResultIsNotEqualToExpect)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			r := &ConfigRepository{
+				storage: tt.fields.storage,
+				Log:     tt.fields.Log,
+			}
+			gotValue, gotIsPresent, err := r.LookupFloat64(tt.args.key)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("ConfigRepository.LookupFloat64() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if gotValue != tt.wantValue {
+				t.Errorf("ConfigRepository.LookupFloat64() gotValue = %v, want %v", gotValue, tt.wantValue)
+			}
+			if gotIsPresent != tt.wantIsPresent {
+				t.Errorf("ConfigRepository.LookupFloat64() gotIsPresent = %v, want %v", gotIsPresent, tt.wantIsPresent)
+			}
+		})
 	}
-	return
 }
 
-// lookup float64 is not present
-func TestConfigRepository_LookupFloat642(t *testing.T) {
-	keyStorage := "key130"
-	valueExpect := float64(0)
-	isPresentExpect := false
-
-	// get & check result
-	value, isPresent, err := configRepository.LookupFloat64(keyStorage)
-	if err != nil {
-		t.Error(ErrorResultIsNotEqualToExpect)
-	}
-	if value != valueExpect {
-		t.Error(ErrorResultIsNotEqualToExpect)
-	}
-	if isPresent != isPresentExpect {
-		t.Error(ErrorResultIsNotEqualToExpect)
-	}
-	return
-}
-
-// lookup floar64 err parse
-func TestConfigRepository_LookupFloat643(t *testing.T) {
-	keyStorage := "key140"
-	valueStorage := "value140"
-
-	// storage set
-	if err := configStorage.Set(keyStorage, valueStorage); err != nil {
-		t.Error(ErrorStorageSetFailed, err.Error())
-		return
-	}
-
-	// get & check result
-	_, _, err := configRepository.LookupFloat64(keyStorage)
-	if err == nil {
-		t.Error(ErrorShouldBeErrorButNotReached)
-	}
-	return
-}
-
-//
-//
-//
-
-// get string
 func TestConfigRepository_GetString(t *testing.T) {
-	keyStorage := "key10"
-	valueStorage := "value10"
-	valueExpect := valueStorage
-
-	// storage set
-	if err := configStorage.Set(keyStorage, valueStorage); err != nil {
-		t.Error(ErrorStorageSetFailed, err.Error())
-		return
+	type fields struct {
+		storage ConfigStorage
+		Log     Logger
 	}
-
-	// get & check result
-	value := configRepository.GetString(keyStorage)
-	if value != valueExpect {
-		t.Error(ErrorResultIsNotEqualToExpect)
+	type args struct {
+		key string
 	}
-	return
+	tests := []struct {
+		name      string
+		fields    fields
+		args      args
+		wantValue string
+	}{
+		{
+			name: "Success",
+			fields: fields{
+				storage: ConfigInfrastructure.New(envStorageMock.New().SetStorageMap(map[string]string{"key": "value"})),
+				Log:     new(LoggerMock),
+			},
+			args: args{
+				key: "key",
+			},
+			wantValue: "value",
+		},
+		{
+			name: "IsNotPresent",
+			fields: fields{
+				storage: ConfigInfrastructure.New(envStorageMock.New()),
+				Log:     new(LoggerMock),
+			},
+			args: args{
+				key: "key",
+			},
+			wantValue: "",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			r := &ConfigRepository{
+				storage: tt.fields.storage,
+				Log:     tt.fields.Log,
+			}
+			if gotValue := r.GetString(tt.args.key); gotValue != tt.wantValue {
+				t.Errorf("ConfigRepository.GetString() = %v, want %v", gotValue, tt.wantValue)
+			}
+		})
+	}
+}
+
+func TestConfigRepository_GetBool(t *testing.T) {
+	type fields struct {
+		storage ConfigStorage
+		Log     Logger
+	}
+	type args struct {
+		key string
+	}
+	tests := []struct {
+		name      string
+		fields    fields
+		args      args
+		wantValue bool
+		wantErr   bool
+	}{
+		{
+			name: "IsPresentTrue",
+			fields: fields{
+				storage: ConfigInfrastructure.New(envStorageMock.New().SetStorageMap(map[string]string{"key": "true"})),
+				Log:     new(LoggerMock),
+			},
+			args: args{
+				key: "key",
+			},
+			wantValue: true,
+		},
+		{
+			name: "IsPresentFalse",
+			fields: fields{
+				storage: ConfigInfrastructure.New(envStorageMock.New().SetStorageMap(map[string]string{"key": "false"})),
+				Log:     new(LoggerMock),
+			},
+			args: args{
+				key: "key",
+			},
+			wantValue: false,
+		},
+		{
+			name: "IsNotPresent",
+			fields: fields{
+				storage: ConfigInfrastructure.New(envStorageMock.New()),
+				Log:     new(LoggerMock),
+			},
+			args: args{
+				key: "key",
+			},
+			wantValue: false,
+		},
+		{
+			name: "ParseErr",
+			fields: fields{
+				storage: ConfigInfrastructure.New(envStorageMock.New().SetStorageMap(map[string]string{"key": "value"})),
+				Log:     new(LoggerMock),
+			},
+			args: args{
+				key: "key",
+			},
+			wantErr: true,
+		},
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			r := &ConfigRepository{
+				storage: tt.fields.storage,
+				Log:     tt.fields.Log,
+			}
+			gotValue, err := r.GetBool(tt.args.key)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("ConfigRepository.GetBool() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if gotValue != tt.wantValue {
+				t.Errorf("ConfigRepository.GetBool() = %v, want %v", gotValue, tt.wantValue)
+			}
+		})
+	}
+}
+
+func TestConfigRepository_GetInt64(t *testing.T) {
+	type fields struct {
+		storage ConfigStorage
+		Log     Logger
+	}
+	type args struct {
+		key string
+	}
+	tests := []struct {
+		name      string
+		fields    fields
+		args      args
+		wantValue int64
+		wantErr   bool
+	}{
+		{
+			name: "IsPresent",
+			fields: fields{
+				storage: ConfigInfrastructure.New(envStorageMock.New().SetStorageMap(map[string]string{"key": "-1000"})),
+				Log:     new(LoggerMock),
+			},
+			args: args{
+				key: "key",
+			},
+			wantValue: -1000,
+		},
+		{
+			name: "IsNotPresent",
+			fields: fields{
+				storage: ConfigInfrastructure.New(envStorageMock.New()),
+				Log:     new(LoggerMock),
+			},
+			args: args{
+				key: "key",
+			},
+			wantValue: 0,
+		},
+		{
+			name: "ParseErr",
+			fields: fields{
+				storage: ConfigInfrastructure.New(envStorageMock.New().SetStorageMap(map[string]string{"key": "value"})),
+				Log:     new(LoggerMock),
+			},
+			args: args{
+				key: "key",
+			},
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			r := &ConfigRepository{
+				storage: tt.fields.storage,
+				Log:     tt.fields.Log,
+			}
+			gotValue, err := r.GetInt64(tt.args.key)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("ConfigRepository.GetInt64() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if gotValue != tt.wantValue {
+				t.Errorf("ConfigRepository.GetInt64() = %v, want %v", gotValue, tt.wantValue)
+			}
+		})
+	}
+}
+
+func TestConfigRepository_GetUint64(t *testing.T) {
+	type fields struct {
+		storage ConfigStorage
+		Log     Logger
+	}
+	type args struct {
+		key string
+	}
+	tests := []struct {
+		name      string
+		fields    fields
+		args      args
+		wantValue uint64
+		wantErr   bool
+	}{
+		{
+			name: "IsPresent",
+			fields: fields{
+				storage: ConfigInfrastructure.New(envStorageMock.New().SetStorageMap(map[string]string{"key": "1000"})),
+				Log:     new(LoggerMock),
+			},
+			args: args{
+				key: "key",
+			},
+			wantValue: 1000,
+		},
+		{
+			name: "IsNotPresent",
+			fields: fields{
+				storage: ConfigInfrastructure.New(envStorageMock.New()),
+				Log:     new(LoggerMock),
+			},
+			args: args{
+				key: "key",
+			},
+			wantValue: 0,
+		},
+		{
+			name: "ParseErr",
+			fields: fields{
+				storage: ConfigInfrastructure.New(envStorageMock.New().SetStorageMap(map[string]string{"key": "value"})),
+				Log:     new(LoggerMock),
+			},
+			args: args{
+				key: "key",
+			},
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			r := &ConfigRepository{
+				storage: tt.fields.storage,
+				Log:     tt.fields.Log,
+			}
+			gotValue, err := r.GetUint64(tt.args.key)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("ConfigRepository.GetUint64() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if gotValue != tt.wantValue {
+				t.Errorf("ConfigRepository.GetUint64() = %v, want %v", gotValue, tt.wantValue)
+			}
+		})
+	}
+}
+
+func TestConfigRepository_GetFloat64(t *testing.T) {
+	type fields struct {
+		storage ConfigStorage
+		Log     Logger
+	}
+	type args struct {
+		key string
+	}
+	tests := []struct {
+		name      string
+		fields    fields
+		args      args
+		wantValue float64
+		wantErr   bool
+	}{
+		{
+			name: "IsPresent",
+			fields: fields{
+				storage: ConfigInfrastructure.New(envStorageMock.New().SetStorageMap(map[string]string{"key": "3.14"})),
+				Log:     new(LoggerMock),
+			},
+			args: args{
+				key: "key",
+			},
+			wantValue: 3.14,
+		},
+		{
+			name: "IsNotPresent",
+			fields: fields{
+				storage: ConfigInfrastructure.New(envStorageMock.New()),
+				Log:     new(LoggerMock),
+			},
+			args: args{
+				key: "key",
+			},
+			wantValue: 0,
+		},
+		{
+			name: "ParseErr",
+			fields: fields{
+				storage: ConfigInfrastructure.New(envStorageMock.New().SetStorageMap(map[string]string{"key": "value"})),
+				Log:     new(LoggerMock),
+			},
+			args: args{
+				key: "key",
+			},
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			r := &ConfigRepository{
+				storage: tt.fields.storage,
+				Log:     tt.fields.Log,
+			}
+			gotValue, err := r.GetFloat64(tt.args.key)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("ConfigRepository.GetFloat64() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if gotValue != tt.wantValue {
+				t.Errorf("ConfigRepository.GetFloat64() = %v, want %v", gotValue, tt.wantValue)
+			}
+		})
+	}
+}
+
+func TestConfigRepository_SetString(t *testing.T) {
+	type fields struct {
+		storage ConfigStorage
+		Log     Logger
+	}
+	type args struct {
+		key   string
+		value string
+	}
+	tests := []struct {
+		name        string
+		fields      fields
+		args        args
+		wantErr     bool
+		wantStorage ConfigStorage
+	}{
+		{
+			name: "Success",
+			fields: fields{
+				storage: ConfigInfrastructure.New(envStorageMock.New()),
+				Log:     new(LoggerMock),
+			},
+			args: args{
+				key:   "key",
+				value: "value",
+			},
+			wantStorage: ConfigInfrastructure.New(envStorageMock.New().SetStorageMap(map[string]string{"key": "value"})),
+		},
+		{
+			name: "StorageErr",
+			fields: fields{
+				storage: ConfigInfrastructure.New(envStorageMock.New().SimulateError()),
+				Log:     new(LoggerMock),
+			},
+			args: args{
+				key:   "key",
+				value: "value",
+			},
+			wantErr:     true,
+			wantStorage: ConfigInfrastructure.New(envStorageMock.New()),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			r := &ConfigRepository{
+				storage: tt.fields.storage,
+				Log:     tt.fields.Log,
+			}
+			if err := r.SetString(tt.args.key, tt.args.value); (err != nil) != tt.wantErr {
+				t.Errorf("ConfigRepository.SetString() error = %v, wantErr %v", err, tt.wantErr)
+			}
+			if !reflect.DeepEqual(tt.wantStorage, r.storage) {
+				t.Errorf("ConfigRepository.SetString() storage = %v, wantStorage %v", r.storage, tt.wantStorage)
+			}
+		})
+	}
+}
+
+func TestConfigRepository_SetBool(t *testing.T) {
+	type fields struct {
+		storage ConfigStorage
+		Log     Logger
+	}
+	type args struct {
+		key   string
+		value bool
+	}
+	tests := []struct {
+		name        string
+		fields      fields
+		args        args
+		wantErr     bool
+		wantStorage ConfigStorage
+	}{
+		{
+			name: "Success",
+			fields: fields{
+				storage: ConfigInfrastructure.New(envStorageMock.New()),
+				Log:     new(LoggerMock),
+			},
+			args: args{
+				key:   "key",
+				value: true,
+			},
+			wantStorage: ConfigInfrastructure.New(envStorageMock.New().SetStorageMap(map[string]string{"key": "true"})),
+		},
+		{
+			name: "StorageErr",
+			fields: fields{
+				storage: ConfigInfrastructure.New(envStorageMock.New().SimulateError()),
+				Log:     new(LoggerMock),
+			},
+			args: args{
+				key:   "key",
+				value: true,
+			},
+			wantErr:     true,
+			wantStorage: ConfigInfrastructure.New(envStorageMock.New()),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			r := &ConfigRepository{
+				storage: tt.fields.storage,
+				Log:     tt.fields.Log,
+			}
+			if err := r.SetBool(tt.args.key, tt.args.value); (err != nil) != tt.wantErr {
+				t.Errorf("ConfigRepository.SetBool() error = %v, wantErr %v", err, tt.wantErr)
+			}
+			if !reflect.DeepEqual(tt.wantStorage, r.storage) {
+				t.Errorf("ConfigRepository.SetString() storage = %v, wantStorage %v", r.storage, tt.wantStorage)
+			}
+		})
+	}
+}
+
+func TestConfigRepository_SetInt64(t *testing.T) {
+	type fields struct {
+		storage ConfigStorage
+		Log     Logger
+	}
+	type args struct {
+		key   string
+		value int64
+	}
+	tests := []struct {
+		name        string
+		fields      fields
+		args        args
+		wantErr     bool
+		wantStorage ConfigStorage
+	}{
+		{
+			name: "Success",
+			fields: fields{
+				storage: ConfigInfrastructure.New(envStorageMock.New()),
+				Log:     new(LoggerMock),
+			},
+			args: args{
+				key:   "key",
+				value: -1000,
+			},
+			wantStorage: ConfigInfrastructure.New(envStorageMock.New().SetStorageMap(map[string]string{"key": "-1000"})),
+		},
+		{
+			name: "StorageErr",
+			fields: fields{
+				storage: ConfigInfrastructure.New(envStorageMock.New().SimulateError()),
+				Log:     new(LoggerMock),
+			},
+			args: args{
+				key:   "key",
+				value: -1000,
+			},
+			wantErr:     true,
+			wantStorage: ConfigInfrastructure.New(envStorageMock.New()),
+		},
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			r := &ConfigRepository{
+				storage: tt.fields.storage,
+				Log:     tt.fields.Log,
+			}
+			if err := r.SetInt64(tt.args.key, tt.args.value); (err != nil) != tt.wantErr {
+				t.Errorf("ConfigRepository.SetInt64() error = %v, wantErr %v", err, tt.wantErr)
+			}
+			if !reflect.DeepEqual(tt.wantStorage, r.storage) {
+				t.Errorf("ConfigRepository.SetString() storage = %v, wantStorage %v", r.storage, tt.wantStorage)
+			}
+		})
+	}
+}
+
+func TestConfigRepository_SetUint64(t *testing.T) {
+	type fields struct {
+		storage ConfigStorage
+		Log     Logger
+	}
+	type args struct {
+		key   string
+		value uint64
+	}
+	tests := []struct {
+		name        string
+		fields      fields
+		args        args
+		wantErr     bool
+		wantStorage ConfigStorage
+	}{
+		{
+			name: "Success",
+			fields: fields{
+				storage: ConfigInfrastructure.New(envStorageMock.New()),
+				Log:     new(LoggerMock),
+			},
+			args: args{
+				key:   "key",
+				value: 1000,
+			},
+			wantStorage: ConfigInfrastructure.New(envStorageMock.New().SetStorageMap(map[string]string{"key": "1000"})),
+		},
+		{
+			name: "StorageErr",
+			fields: fields{
+				storage: ConfigInfrastructure.New(envStorageMock.New().SimulateError()),
+				Log:     new(LoggerMock),
+			},
+			args: args{
+				key:   "key",
+				value: 1000,
+			},
+			wantErr:     true,
+			wantStorage: ConfigInfrastructure.New(envStorageMock.New()),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			r := &ConfigRepository{
+				storage: tt.fields.storage,
+				Log:     tt.fields.Log,
+			}
+			if err := r.SetUint64(tt.args.key, tt.args.value); (err != nil) != tt.wantErr {
+				t.Errorf("ConfigRepository.SetUint64() error = %v, wantErr %v", err, tt.wantErr)
+			}
+			if !reflect.DeepEqual(tt.wantStorage, r.storage) {
+				t.Errorf("ConfigRepository.SetString() storage = %v, wantStorage %v", r.storage, tt.wantStorage)
+			}
+		})
+	}
+}
+
+func TestConfigRepository_SetFloat64(t *testing.T) {
+	type fields struct {
+		storage ConfigStorage
+		Log     Logger
+	}
+	type args struct {
+		key   string
+		value float64
+	}
+	tests := []struct {
+		name        string
+		fields      fields
+		args        args
+		wantErr     bool
+		wantStorage ConfigStorage
+	}{
+		{
+			name: "Success",
+			fields: fields{
+				storage: ConfigInfrastructure.New(envStorageMock.New()),
+				Log:     new(LoggerMock),
+			},
+			args: args{
+				key:   "key",
+				value: 3.14,
+			},
+			wantStorage: ConfigInfrastructure.New(envStorageMock.New().SetStorageMap(map[string]string{"key": "3.140000"})),
+		},
+		{
+			name: "StorageErr",
+			fields: fields{
+				storage: ConfigInfrastructure.New(envStorageMock.New().SimulateError()),
+				Log:     new(LoggerMock),
+			},
+			args: args{
+				key:   "key",
+				value: 3.14,
+			},
+			wantErr:     true,
+			wantStorage: ConfigInfrastructure.New(envStorageMock.New()),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			r := &ConfigRepository{
+				storage: tt.fields.storage,
+				Log:     tt.fields.Log,
+			}
+			if err := r.SetFloat64(tt.args.key, tt.args.value); (err != nil) != tt.wantErr {
+				t.Errorf("ConfigRepository.SetFloat64() error = %v, wantErr %v", err, tt.wantErr)
+			}
+			if !reflect.DeepEqual(tt.wantStorage, r.storage) {
+				t.Errorf("ConfigRepository.SetString() storage = %v, wantStorage %v", r.storage, tt.wantStorage)
+				spew.Dump(r.storage)
+			}
+		})
+	}
+}
+
+func TestConfigRepository_UnSet(t *testing.T) {
+	type fields struct {
+		storage ConfigStorage
+		Log     Logger
+	}
+	type args struct {
+		key string
+	}
+	tests := []struct {
+		name        string
+		fields      fields
+		args        args
+		wantErr     bool
+		wantStorage ConfigStorage
+	}{
+		{
+			name: "Success",
+			fields: fields{
+				storage: ConfigInfrastructure.New(envStorageMock.New().SetStorageMap(map[string]string{
+					"key1": "value1",
+					"key2": "value2",
+					"key3": "value3",
+				})),
+				Log: new(LoggerMock),
+			},
+			args: args{
+				key: "key2",
+			},
+			wantStorage: ConfigInfrastructure.New(envStorageMock.New().SetStorageMap(map[string]string{
+				"key1": "value1",
+				"key3": "value3",
+			})),
+		},
+		{
+			name: "StorageErr",
+			fields: fields{
+				storage: ConfigInfrastructure.New(envStorageMock.New().SimulateError().SetStorageMap(map[string]string{
+					"key1": "value1",
+					"key2": "value2",
+					"key3": "value3",
+				})),
+				Log: new(LoggerMock),
+			},
+			args: args{
+				key: "key2",
+			},
+			wantErr: true,
+			wantStorage: ConfigInfrastructure.New(envStorageMock.New().SetStorageMap(map[string]string{
+				"key1": "value1",
+				"key2": "value2",
+				"key3": "value3",
+			})),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			r := &ConfigRepository{
+				storage: tt.fields.storage,
+				Log:     tt.fields.Log,
+			}
+			if err := r.UnSet(tt.args.key); (err != nil) != tt.wantErr {
+				t.Errorf("ConfigRepository.UnSet() error = %v, wantErr %v", err, tt.wantErr)
+			}
+			if !reflect.DeepEqual(tt.wantStorage, r.storage) {
+				t.Errorf("ConfigRepository.SetString() storage = %v, wantStorage %v", r.storage, tt.wantStorage)
+				spew.Dump(r.storage)
+			}
+		})
+	}
+}
+
+func TestConfigRepository_Expand(t *testing.T) {
+	type fields struct {
+		storage ConfigStorage
+		Log     Logger
+	}
+	type args struct {
+		sIn string
+	}
+	tests := []struct {
+		name     string
+		fields   fields
+		args     args
+		wantSOut string
+	}{
+		{
+			name: "IsPresent",
+			fields: fields{
+				storage: ConfigInfrastructure.New(envStorageMock.New().SetStorageMap(map[string]string{
+					"key1": "value1",
+				})),
+				Log: new(LoggerMock),
+			},
+			args: args{
+				sIn: "key1 is $key1",
+			},
+			wantSOut: "key1 is value1",
+		},
+		{
+			name: "IsNotPresent",
+			fields: fields{
+				storage: ConfigInfrastructure.New(envStorageMock.New()),
+				Log:     new(LoggerMock),
+			},
+			args: args{
+				sIn: "key1 is $key1",
+			},
+			wantSOut: "key1 is ",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			r := &ConfigRepository{
+				storage: tt.fields.storage,
+				Log:     tt.fields.Log,
+			}
+			if gotSOut := r.Expand(tt.args.sIn); gotSOut != tt.wantSOut {
+				t.Errorf("ConfigRepository.Expand() = %v, want %v", gotSOut, tt.wantSOut)
+			}
+		})
+	}
+}
+
+func TestConfigRepository_Vars(t *testing.T) {
+	type fields struct {
+		storage ConfigStorage
+		Log     Logger
+	}
+	tests := []struct {
+		name     string
+		fields   fields
+		wantVars []string
+	}{
+		{
+			name: "Success",
+			fields: fields{
+				storage: ConfigInfrastructure.New(envStorageMock.New().SetStorageMap(map[string]string{
+					"key1": "value1",
+					"key2": "value2",
+					"key3": "value3",
+				})),
+				Log: new(LoggerMock),
+			},
+			wantVars: []string{
+				"key1=value1",
+				"key2=value2",
+				"key3=value3",
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			r := &ConfigRepository{
+				storage: tt.fields.storage,
+				Log:     tt.fields.Log,
+			}
+			if gotVars := r.Vars(); !sameStringSlice(gotVars, tt.wantVars) {
+				t.Errorf("ConfigRepository.Vars() = %v, want %v", gotVars, tt.wantVars)
+			}
+		})
+	}
+}
+
+func TestConfigRepository_ClearAll(t *testing.T) {
+	type fields struct {
+		storage ConfigStorage
+		Log     Logger
+	}
+	tests := []struct {
+		name        string
+		fields      fields
+		wantStorage ConfigStorage
+	}{
+		{
+			name: "Success",
+			fields: fields{
+				storage: ConfigInfrastructure.New(envStorageMock.New().SetStorageMap(map[string]string{
+					"key1": "value1",
+					"key2": "value2",
+					"key3": "value3",
+				})),
+				Log: new(LoggerMock),
+			},
+			wantStorage: ConfigInfrastructure.New(envStorageMock.New()),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			r := &ConfigRepository{
+				storage: tt.fields.storage,
+				Log:     tt.fields.Log,
+			}
+			r.ClearAll()
+
+			if !reflect.DeepEqual(tt.wantStorage, r.storage) {
+				t.Errorf("ConfigRepository.SetString() storage = %v, wantStorage %v", r.storage, tt.wantStorage)
+				spew.Dump(r.storage)
+			}
+		})
+	}
+}
+
+func sameStringSlice(x, y []string) bool {
+	if len(x) != len(y) {
+		return false
+	}
+	// create a map of string -> int
+	diff := make(map[string]int, len(x))
+	for _, _x := range x {
+		// 0 value for int is 0, so just increment a counter for the string
+		diff[_x]++
+	}
+	for _, _y := range y {
+		// If the string _y is not in diff bail out early
+		if _, ok := diff[_y]; !ok {
+			return false
+		}
+		diff[_y] -= 1
+		if diff[_y] == 0 {
+			delete(diff, _y)
+		}
+	}
+	if len(diff) == 0 {
+		return true
+	}
+	return false
 }
