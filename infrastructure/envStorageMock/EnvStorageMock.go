@@ -10,8 +10,8 @@ import (
 const ErrorSimulated = "simulated error"
 
 type MockEnv struct {
-	Storage       map[string]string
-	SimulateError bool
+	Storage           map[string]string
+	SimulateErrorFlag bool
 }
 
 func New() (mockEnv *MockEnv) {
@@ -26,7 +26,8 @@ func (mockEnv *MockEnv) Getenv(key string) (value string) {
 }
 
 func (mockEnv *MockEnv) Setenv(key, value string) (err error) {
-	if mockEnv.SimulateError {
+	if mockEnv.SimulateErrorFlag {
+		mockEnv.SimulateErrorFlag = false
 		err = errors.Errorf(ErrorSimulated)
 		return
 	}
@@ -50,7 +51,8 @@ func (mockEnv *MockEnv) Setenv(key, value string) (err error) {
 }
 
 func (mockEnv *MockEnv) Unsetenv(key string) (err error) {
-	if mockEnv.SimulateError {
+	if mockEnv.SimulateErrorFlag {
+		mockEnv.SimulateErrorFlag = false
 		err = errors.Errorf(ErrorSimulated)
 		return
 	}
@@ -79,4 +81,14 @@ func (mockEnv *MockEnv) Environ() (envStrings []string) {
 
 func (mockEnv *MockEnv) Clearenv() {
 	mockEnv.Storage = make(map[string]string)
+}
+
+func (mockEnv *MockEnv) SetStorageMap(storage map[string]string) *MockEnv {
+	mockEnv.Storage = storage
+	return mockEnv
+}
+
+func (mockEnv *MockEnv) SimulateError() *MockEnv {
+	mockEnv.SimulateErrorFlag = true
+	return mockEnv
 }

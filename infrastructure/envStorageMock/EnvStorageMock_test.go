@@ -20,8 +20,8 @@ var (
 func TestMockEnv_New(t *testing.T) {
 	mockEnv = New()
 	mockEnvExpect := &MockEnv{
-		Storage:       map[string]string{},
-		SimulateError: false,
+		Storage:           map[string]string{},
+		SimulateErrorFlag: false,
 	}
 
 	if !reflect.DeepEqual(mockEnv, mockEnvExpect) {
@@ -73,13 +73,12 @@ func TestMockEnv_Setenv2(t *testing.T) {
 	envValue := "bar"
 
 	// set var
-	mockEnv.SimulateError = true
+	mockEnv.SimulateError()
 	err := mockEnv.Setenv(envKey, envValue)
 	if err == nil {
 		t.Error(ErrorShouldBeErrorButNotReached)
 		return
 	}
-	mockEnv.SimulateError = false
 }
 
 // Unset failed
@@ -87,13 +86,12 @@ func TestMockEnv_Unsetenv(t *testing.T) {
 	envKey := "foo"
 
 	// unset var
-	mockEnv.SimulateError = true
+	mockEnv.SimulateError()
 	err := mockEnv.Unsetenv(envKey)
 	if err == nil {
 		t.Error(ErrorShouldBeErrorButNotReached)
 		return
 	}
-	mockEnv.SimulateError = false
 }
 
 // Unset success
@@ -249,20 +247,18 @@ func BenchmarkMockEnv_Setenv(b *testing.B) {
 
 func BenchmarkMockEnv_Setenv2(b *testing.B) {
 	b.ReportAllocs()
-	mockEnv.SimulateError = true
+	mockEnv.SimulateError()
 	for i := 0; i < b.N; i++ {
 		mockEnv.Setenv("foo", "bar")
 	}
-	mockEnv.SimulateError = false
 }
 
 func BenchmarkMockEnv_Unsetenv(b *testing.B) {
 	b.ReportAllocs()
-	mockEnv.SimulateError = true
+	mockEnv.SimulateError()
 	for i := 0; i < b.N; i++ {
 		mockEnv.Unsetenv("foo")
 	}
-	mockEnv.SimulateError = false
 }
 
 func BenchmarkMockEnv_Unsetenv2(b *testing.B) {
