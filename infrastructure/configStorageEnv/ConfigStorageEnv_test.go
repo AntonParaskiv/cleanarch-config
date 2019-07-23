@@ -73,12 +73,11 @@ func TestConfigStorageEnv_Set2(t *testing.T) {
 	envValue := "bar"
 
 	// set var
-	envStorage.SimulateError = true
+	envStorage.SimulateError()
 	if err := configStorageEnv.Set(envKey, envValue); err == nil {
 		t.Error(ErrorShouldBeErrorButNotReached)
 		return
 	}
-	envStorage.SimulateError = false
 }
 
 // Unset failed
@@ -86,13 +85,12 @@ func TestConfigStorageEnv_UnSet(t *testing.T) {
 	envKey := "foo"
 
 	// unset var
-	envStorage.SimulateError = true
+	envStorage.SimulateError()
 	err := configStorageEnv.UnSet(envKey)
 	if err == nil {
 		t.Error(ErrorShouldBeErrorButNotReached)
 		return
 	}
-	envStorage.SimulateError = false
 }
 
 // Unset success
@@ -251,20 +249,18 @@ func BenchmarkConfigStorageEnv_Set(b *testing.B) {
 
 func BenchmarkConfigStorageEnv_Set2(b *testing.B) {
 	b.ReportAllocs()
-	envStorage.SimulateError = true
+	envStorage.SimulateError()
 	for i := 0; i < b.N; i++ {
 		configStorageEnv.Set("foo", "bar")
 	}
-	envStorage.SimulateError = false
 }
 
 func BenchmarkConfigStorageEnv_UnSet(b *testing.B) {
 	b.ReportAllocs()
-	envStorage.SimulateError = true
+	envStorage.SimulateError()
 	for i := 0; i < b.N; i++ {
 		configStorageEnv.UnSet("foo")
 	}
-	envStorage.SimulateError = false
 }
 
 func BenchmarkConfigStorageEnv_UnSet2(b *testing.B) {
