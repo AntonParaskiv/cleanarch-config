@@ -1,6 +1,7 @@
 package ConfigInteractor
 
 import (
+	"github.com/AntonParaskiv/cleanarch-config/domain/ConfigVar"
 	"github.com/AntonParaskiv/cleanarch-config/mocks/LoggerMock"
 )
 
@@ -42,14 +43,14 @@ type Logger interface {
 type ConfigInteractor struct {
 	repo   ConfigRepository
 	prefix string
-	envMap map[string]*ConfVar
+	envMap map[string]*ConfigVar.Var
 	log    Logger
 }
 
 func New(repo ConfigRepository) (i *ConfigInteractor) {
 	i = new(ConfigInteractor)
 	i.repo = repo
-	i.envMap = make(map[string]*ConfVar, 0)
+	i.envMap = make(map[string]*ConfigVar.Var, 0)
 	i.log = LoggerMock.New()
 	return
 }

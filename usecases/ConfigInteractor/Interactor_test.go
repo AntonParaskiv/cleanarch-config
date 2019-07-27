@@ -13,25 +13,25 @@ package ConfigInteractor
 //
 //func (m *ConfigRepositoryMock) Vars() (Vars []string) { return }
 //
-//func (m *ConfigRepositoryMock) GetString(key string) (Value string) {
+//func (m *ConfigRepositoryMock) GetString(key string) (value string) {
 //	return m.String
 //}
 //
-//func (m *ConfigRepositoryMock) GetBool(key string) (Value bool, filled bool, err error) {
+//func (m *ConfigRepositoryMock) GetBool(key string) (value bool, filled bool, err error) {
 //	if m.Bool {
 //		return m.Bool, m.Bool, nil
 //	}
 //	return m.Bool, m.Bool, errors.New("false")
 //}
 //
-//func (m *ConfigRepositoryMock) GetInt64(key string) (Value int64, filled bool, err error)     { return }
-//func (m *ConfigRepositoryMock) GetUint64(key string) (Value uint64, filled bool, err error)   { return }
-//func (m *ConfigRepositoryMock) GetFloat64(key string) (Value float64, filled bool, err error) { return }
-//func (m *ConfigRepositoryMock) SetString(key, Value string) (err error)                       { return }
-//func (m *ConfigRepositoryMock) SetBool(key string, Value bool) (err error)                    { return }
-//func (m *ConfigRepositoryMock) SetInt64(key string, Value int64) (err error)                  { return }
-//func (m *ConfigRepositoryMock) SetUint64(key string, Value uint64) (err error)                { return }
-//func (m *ConfigRepositoryMock) SetFloat64(key string, Value float64) (err error)              { return }
+//func (m *ConfigRepositoryMock) GetInt64(key string) (value int64, filled bool, err error)     { return }
+//func (m *ConfigRepositoryMock) GetUint64(key string) (value uint64, filled bool, err error)   { return }
+//func (m *ConfigRepositoryMock) GetFloat64(key string) (value float64, filled bool, err error) { return }
+//func (m *ConfigRepositoryMock) SetString(key, value string) (err error)                       { return }
+//func (m *ConfigRepositoryMock) SetBool(key string, value bool) (err error)                    { return }
+//func (m *ConfigRepositoryMock) SetInt64(key string, value int64) (err error)                  { return }
+//func (m *ConfigRepositoryMock) SetUint64(key string, value uint64) (err error)                { return }
+//func (m *ConfigRepositoryMock) SetFloat64(key string, value float64) (err error)              { return }
 //func (m *ConfigRepositoryMock) ClearAllVars()                                                 { return }
 //
 //type LoggerMock struct {

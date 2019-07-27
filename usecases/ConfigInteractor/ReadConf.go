@@ -20,7 +20,7 @@ func (i *ConfigInteractor) ReadConf() (errs []error) {
 	for key, confVar := range i.envMap {
 
 		// get value from repo
-		switch confVar.varType {
+		switch confVar.Type() {
 		case "string":
 			value, isPresent = i.repo.LookupString(key)
 			err = nil
@@ -33,7 +33,7 @@ func (i *ConfigInteractor) ReadConf() (errs []error) {
 		case "float64":
 			value, isPresent, err = i.repo.LookupFloat64(key)
 		default:
-			err := errors.Errorf(errGetKeyFailedUnkownType, key, confVar.varType)
+			err := errors.Errorf(errGetKeyFailedUnkownType, key, confVar.Type())
 			errs = append(errs, err)
 			continue
 		}
@@ -46,16 +46,16 @@ func (i *ConfigInteractor) ReadConf() (errs []error) {
 
 		if !isPresent {
 			// check required
-			if confVar.isRequired {
+			if confVar.IsRequired() {
 				err := errors.Errorf(errKeyMustBeFilled, key)
 				errs = append(errs, err)
 				continue
 			} else {
 				// set default value
-				confVar.Value = confVar.defaultValue
+				confVar.SetValue(confVar.DefaultValue())
 			}
 		} else {
-			confVar.Value = value
+			confVar.SetValue(value)
 		}
 
 	}
