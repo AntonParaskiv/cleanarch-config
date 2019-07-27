@@ -1,12 +1,13 @@
-package configRepository
+package ConfigRepository
 
 import (
 	"fmt"
-	ConfigInfrastructure "github.com/AntonParaskiv/cleanarch-config/infrastructure/configStorageEnv"
-	"github.com/AntonParaskiv/cleanarch-config/infrastructure/envStorageMock"
-	"github.com/davecgh/go-spew/spew"
 	"reflect"
 	"testing"
+
+	ConfigInfrastructure "github.com/AntonParaskiv/cleanarch-config/infrastructure/ConfigStorageEnv"
+	"github.com/AntonParaskiv/cleanarch-config/infrastructure/envStorageMock"
+	"github.com/davecgh/go-spew/spew"
 )
 
 type LoggerMock struct {
@@ -56,7 +57,6 @@ func (lm *LoggerMock) Fatalf(format string, a ...interface{}) {
 func TestNew(t *testing.T) {
 	type args struct {
 		storage ConfigStorage
-		log     Logger
 	}
 	tests := []struct {
 		name   string
@@ -67,17 +67,15 @@ func TestNew(t *testing.T) {
 			name: "Success",
 			args: args{
 				storage: ConfigInfrastructure.New(envStorageMock.New()),
-				log:     new(LoggerMock),
 			},
 			wantCr: &ConfigRepository{
 				storage: ConfigInfrastructure.New(envStorageMock.New()),
-				Log:     new(LoggerMock),
 			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if gotCr := New(tt.args.storage, tt.args.log); !reflect.DeepEqual(gotCr, tt.wantCr) {
+			if gotCr := New(tt.args.storage); !reflect.DeepEqual(gotCr, tt.wantCr) {
 				t.Errorf("New() = %v, want %v", gotCr, tt.wantCr)
 			}
 		})
@@ -128,7 +126,7 @@ func TestConfigRepository_lookupString(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			r := &ConfigRepository{
 				storage: tt.fields.storage,
-				Log:     tt.fields.Log,
+				log:     tt.fields.Log,
 			}
 			gotValue, gotIsPresent := r.lookupString(tt.args.key)
 			if gotValue != tt.wantValue {
@@ -185,7 +183,7 @@ func TestConfigRepository_LookupString(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			r := &ConfigRepository{
 				storage: tt.fields.storage,
-				Log:     tt.fields.Log,
+				log:     tt.fields.Log,
 			}
 			gotValue, gotIsPresent := r.LookupString(tt.args.key)
 			if gotValue != tt.wantValue {
@@ -267,7 +265,7 @@ func TestConfigRepository_LookupBool(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			r := &ConfigRepository{
 				storage: tt.fields.storage,
-				Log:     tt.fields.Log,
+				log:     tt.fields.Log,
 			}
 			gotValue, gotIsPresent, err := r.LookupBool(tt.args.key)
 			if (err != nil) != tt.wantErr {
@@ -341,7 +339,7 @@ func TestConfigRepository_LookupInt64(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			r := &ConfigRepository{
 				storage: tt.fields.storage,
-				Log:     tt.fields.Log,
+				log:     tt.fields.Log,
 			}
 			gotValue, gotIsPresent, err := r.LookupInt64(tt.args.key)
 			if (err != nil) != tt.wantErr {
@@ -415,7 +413,7 @@ func TestConfigRepository_LookupUint64(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			r := &ConfigRepository{
 				storage: tt.fields.storage,
-				Log:     tt.fields.Log,
+				log:     tt.fields.Log,
 			}
 			gotValue, gotIsPresent, err := r.LookupUint64(tt.args.key)
 			if (err != nil) != tt.wantErr {
@@ -489,7 +487,7 @@ func TestConfigRepository_LookupFloat64(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			r := &ConfigRepository{
 				storage: tt.fields.storage,
-				Log:     tt.fields.Log,
+				log:     tt.fields.Log,
 			}
 			gotValue, gotIsPresent, err := r.LookupFloat64(tt.args.key)
 			if (err != nil) != tt.wantErr {
@@ -547,7 +545,7 @@ func TestConfigRepository_GetString(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			r := &ConfigRepository{
 				storage: tt.fields.storage,
-				Log:     tt.fields.Log,
+				log:     tt.fields.Log,
 			}
 			if gotValue := r.GetString(tt.args.key); gotValue != tt.wantValue {
 				t.Errorf("ConfigRepository.GetString() = %v, want %v", gotValue, tt.wantValue)
@@ -621,7 +619,7 @@ func TestConfigRepository_GetBool(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			r := &ConfigRepository{
 				storage: tt.fields.storage,
-				Log:     tt.fields.Log,
+				log:     tt.fields.Log,
 			}
 			gotValue, err := r.GetBool(tt.args.key)
 			if (err != nil) != tt.wantErr {
@@ -688,7 +686,7 @@ func TestConfigRepository_GetInt64(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			r := &ConfigRepository{
 				storage: tt.fields.storage,
-				Log:     tt.fields.Log,
+				log:     tt.fields.Log,
 			}
 			gotValue, err := r.GetInt64(tt.args.key)
 			if (err != nil) != tt.wantErr {
@@ -755,7 +753,7 @@ func TestConfigRepository_GetUint64(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			r := &ConfigRepository{
 				storage: tt.fields.storage,
-				Log:     tt.fields.Log,
+				log:     tt.fields.Log,
 			}
 			gotValue, err := r.GetUint64(tt.args.key)
 			if (err != nil) != tt.wantErr {
@@ -822,7 +820,7 @@ func TestConfigRepository_GetFloat64(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			r := &ConfigRepository{
 				storage: tt.fields.storage,
-				Log:     tt.fields.Log,
+				log:     tt.fields.Log,
 			}
 			gotValue, err := r.GetFloat64(tt.args.key)
 			if (err != nil) != tt.wantErr {
@@ -882,7 +880,7 @@ func TestConfigRepository_SetString(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			r := &ConfigRepository{
 				storage: tt.fields.storage,
-				Log:     tt.fields.Log,
+				log:     tt.fields.Log,
 			}
 			if err := r.SetString(tt.args.key, tt.args.value); (err != nil) != tt.wantErr {
 				t.Errorf("ConfigRepository.SetString() error = %v, wantErr %v", err, tt.wantErr)
@@ -940,7 +938,7 @@ func TestConfigRepository_SetBool(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			r := &ConfigRepository{
 				storage: tt.fields.storage,
-				Log:     tt.fields.Log,
+				log:     tt.fields.Log,
 			}
 			if err := r.SetBool(tt.args.key, tt.args.value); (err != nil) != tt.wantErr {
 				t.Errorf("ConfigRepository.SetBool() error = %v, wantErr %v", err, tt.wantErr)
@@ -999,7 +997,7 @@ func TestConfigRepository_SetInt64(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			r := &ConfigRepository{
 				storage: tt.fields.storage,
-				Log:     tt.fields.Log,
+				log:     tt.fields.Log,
 			}
 			if err := r.SetInt64(tt.args.key, tt.args.value); (err != nil) != tt.wantErr {
 				t.Errorf("ConfigRepository.SetInt64() error = %v, wantErr %v", err, tt.wantErr)
@@ -1057,7 +1055,7 @@ func TestConfigRepository_SetUint64(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			r := &ConfigRepository{
 				storage: tt.fields.storage,
-				Log:     tt.fields.Log,
+				log:     tt.fields.Log,
 			}
 			if err := r.SetUint64(tt.args.key, tt.args.value); (err != nil) != tt.wantErr {
 				t.Errorf("ConfigRepository.SetUint64() error = %v, wantErr %v", err, tt.wantErr)
@@ -1115,7 +1113,7 @@ func TestConfigRepository_SetFloat64(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			r := &ConfigRepository{
 				storage: tt.fields.storage,
-				Log:     tt.fields.Log,
+				log:     tt.fields.Log,
 			}
 			if err := r.SetFloat64(tt.args.key, tt.args.value); (err != nil) != tt.wantErr {
 				t.Errorf("ConfigRepository.SetFloat64() error = %v, wantErr %v", err, tt.wantErr)
@@ -1186,7 +1184,7 @@ func TestConfigRepository_UnSet(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			r := &ConfigRepository{
 				storage: tt.fields.storage,
-				Log:     tt.fields.Log,
+				log:     tt.fields.Log,
 			}
 			if err := r.UnSet(tt.args.key); (err != nil) != tt.wantErr {
 				t.Errorf("ConfigRepository.UnSet() error = %v, wantErr %v", err, tt.wantErr)
@@ -1242,7 +1240,7 @@ func TestConfigRepository_Expand(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			r := &ConfigRepository{
 				storage: tt.fields.storage,
-				Log:     tt.fields.Log,
+				log:     tt.fields.Log,
 			}
 			if gotSOut := r.Expand(tt.args.sIn); gotSOut != tt.wantSOut {
 				t.Errorf("ConfigRepository.Expand() = %v, want %v", gotSOut, tt.wantSOut)
@@ -1282,7 +1280,7 @@ func TestConfigRepository_Vars(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			r := &ConfigRepository{
 				storage: tt.fields.storage,
-				Log:     tt.fields.Log,
+				log:     tt.fields.Log,
 			}
 			if gotVars := r.Vars(); !sameStringSlice(gotVars, tt.wantVars) {
 				t.Errorf("ConfigRepository.Vars() = %v, want %v", gotVars, tt.wantVars)
@@ -1318,7 +1316,7 @@ func TestConfigRepository_ClearAll(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			r := &ConfigRepository{
 				storage: tt.fields.storage,
-				Log:     tt.fields.Log,
+				log:     tt.fields.Log,
 			}
 			r.ClearAll()
 

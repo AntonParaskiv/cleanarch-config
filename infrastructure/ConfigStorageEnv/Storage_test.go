@@ -1,4 +1,4 @@
-package configStorageEnv
+package ConfigStorageEnv
 
 import (
 	"github.com/AntonParaskiv/cleanarch-config/infrastructure/envStorageMock"
@@ -15,7 +15,7 @@ const (
 
 var (
 	envStorage       *envStorageMock.MockEnv
-	configStorageEnv *ConfigStorageEnv
+	configStorageEnv *ConfigStorage
 )
 
 // New
@@ -25,7 +25,7 @@ func TestConfigStorageEnv_New(t *testing.T) {
 	envStorage.Storage["lorem"] = "ipsum"
 	envStorage.Storage["ilike"] = "gophers"
 
-	configStorageEnvExpect := &ConfigStorageEnv{
+	configStorageEnvExpect := &ConfigStorage{
 		storage: envStorage,
 	}
 

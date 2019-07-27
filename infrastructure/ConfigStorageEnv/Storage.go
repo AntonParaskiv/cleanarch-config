@@ -1,4 +1,4 @@
-package configStorageEnv
+package ConfigStorageEnv
 
 type EnvStorage interface {
 	Getenv(key string) (value string)
@@ -10,46 +10,46 @@ type EnvStorage interface {
 	Clearenv()
 }
 
-type ConfigStorageEnv struct {
+type ConfigStorage struct {
 	storage EnvStorage
 }
 
-func New(storage EnvStorage) (cse *ConfigStorageEnv) {
-	cse = new(ConfigStorageEnv)
+func New(storage EnvStorage) (cse *ConfigStorage) {
+	cse = new(ConfigStorage)
 	cse.storage = storage
 	return
 }
 
-func (cse *ConfigStorageEnv) Get(key string) (value string) {
+func (cse *ConfigStorage) Get(key string) (value string) {
 	value = cse.storage.Getenv(key)
 	return
 }
 
-func (cse *ConfigStorageEnv) Set(key, value string) (err error) {
+func (cse *ConfigStorage) Set(key, value string) (err error) {
 	err = cse.storage.Setenv(key, value)
 	return
 }
 
-func (cse *ConfigStorageEnv) UnSet(key string) (err error) {
+func (cse *ConfigStorage) UnSet(key string) (err error) {
 	err = cse.storage.Unsetenv(key)
 	return
 }
 
-func (cse *ConfigStorageEnv) Expand(sIn string) (sOut string) {
+func (cse *ConfigStorage) Expand(sIn string) (sOut string) {
 	sOut = cse.storage.ExpandEnv(sIn)
 	return
 }
 
-func (cse *ConfigStorageEnv) Lookup(key string) (value string, isPresent bool) {
+func (cse *ConfigStorage) Lookup(key string) (value string, isPresent bool) {
 	value, isPresent = cse.storage.LookupEnv(key)
 	return
 }
 
-func (cse *ConfigStorageEnv) Vars() (vars []string) {
+func (cse *ConfigStorage) Vars() (vars []string) {
 	vars = cse.storage.Environ()
 	return
 }
 
-func (cse *ConfigStorageEnv) ClearAll() {
+func (cse *ConfigStorage) ClearAll() {
 	cse.storage.Clearenv()
 }

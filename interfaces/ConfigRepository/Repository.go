@@ -1,4 +1,4 @@
-package configRepository
+package ConfigRepository
 
 import (
 	"fmt"
@@ -36,22 +36,26 @@ type Logger interface {
 
 type ConfigRepository struct {
 	storage ConfigStorage
-	Log     Logger
+	log     Logger
 }
 
-func New(storage ConfigStorage, log Logger) (cr *ConfigRepository) {
+func New(storage ConfigStorage) (cr *ConfigRepository) {
 	cr = new(ConfigRepository)
 	cr.storage = storage
-	cr.Log = log
 	return
+}
+
+func (cr *ConfigRepository) SetLogger(log Logger) *ConfigRepository {
+	cr.log = log
+	return cr
 }
 
 func (r *ConfigRepository) lookupString(key string) (value string, isPresent bool) {
 	value, isPresent = r.storage.Lookup(key)
 	if isPresent {
-		r.Log.Debugf("%s=%s", key, value)
+		r.log.Debugf("%s=%s", key, value)
 	} else {
-		r.Log.Debugf("%s is not present", key)
+		r.log.Debugf("%s is not present", key)
 	}
 	return
 }
@@ -66,7 +70,7 @@ func (r *ConfigRepository) LookupBool(key string) (value bool, isPresent bool, e
 		value, err = strconv.ParseBool(valueString)
 		if err != nil {
 			err = errors.Errorf(ErrorParseFailed, "bool", key, err.Error())
-			r.Log.Errorf(err.Error())
+			r.log.Errorf(err.Error())
 		}
 	}
 	return
@@ -78,7 +82,7 @@ func (r *ConfigRepository) LookupInt64(key string) (value int64, isPresent bool,
 		value, err = strconv.ParseInt(valueString, 10, 64)
 		if err != nil {
 			err = errors.Errorf(ErrorParseFailed, "int64", key, err.Error())
-			r.Log.Errorf(err.Error())
+			r.log.Errorf(err.Error())
 		}
 	}
 	return
@@ -90,7 +94,7 @@ func (r *ConfigRepository) LookupUint64(key string) (value uint64, isPresent boo
 		value, err = strconv.ParseUint(valueString, 10, 64)
 		if err != nil {
 			err = errors.Errorf(ErrorParseFailed, "uint64", key, err.Error())
-			r.Log.Errorf(err.Error())
+			r.log.Errorf(err.Error())
 		}
 	}
 	return
@@ -102,7 +106,7 @@ func (r *ConfigRepository) LookupFloat64(key string) (value float64, isPresent b
 		value, err = strconv.ParseFloat(valueString, 64)
 		if err != nil {
 			err = errors.Errorf(ErrorParseFailed, "float64", key, err.Error())
-			r.Log.Errorf(err.Error())
+			r.log.Errorf(err.Error())
 		}
 	}
 	return
