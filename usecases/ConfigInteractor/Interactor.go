@@ -1,5 +1,9 @@
 package ConfigInteractor
 
+import (
+	"github.com/AntonParaskiv/cleanarch-config/mocks/LoggerMock"
+)
+
 type ConfigRepository interface {
 	LookupString(key string) (value string, isPresent bool)
 	LookupBool(key string) (value bool, isPresent bool, err error)
@@ -42,19 +46,23 @@ type ConfigInteractor struct {
 	log    Logger
 }
 
-func New(repo ConfigRepository) (ci *ConfigInteractor) {
-	ci = new(ConfigInteractor)
-	ci.repo = repo
-	ci.envMap = make(map[string]*ConfVar, 0)
+func New(repo ConfigRepository) (i *ConfigInteractor) {
+	i = new(ConfigInteractor)
+	i.repo = repo
+	i.envMap = make(map[string]*ConfVar, 0)
+	i.log = LoggerMock.New()
 	return
 }
 
-func (ci *ConfigInteractor) SetPrefix(prefix string) *ConfigInteractor {
-	ci.prefix = prefix
-	return ci
+func (i *ConfigInteractor) SetPrefix(prefix string) *ConfigInteractor {
+	i.prefix = prefix
+	return i
 }
 
-func (ci *ConfigInteractor) SetLogger(log Logger) *ConfigInteractor {
-	ci.log = log
-	return ci
+func (i *ConfigInteractor) SetLogger(log Logger) *ConfigInteractor {
+	if log == nil {
+		log = LoggerMock.New()
+	}
+	i.log = log
+	return i
 }

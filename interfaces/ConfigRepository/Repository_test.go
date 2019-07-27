@@ -1,62 +1,18 @@
 package ConfigRepository
 
 import (
-	"fmt"
-	"reflect"
-	"testing"
-
 	ConfigInfrastructure "github.com/AntonParaskiv/cleanarch-config/infrastructure/ConfigStorageEnv"
 	"github.com/AntonParaskiv/cleanarch-config/infrastructure/envStorageMock"
+	"github.com/AntonParaskiv/cleanarch-config/mocks/LoggerMock"
 	"github.com/davecgh/go-spew/spew"
+	"reflect"
+	"testing"
 )
-
-type LoggerMock struct {
-	message string
-}
-
-func (lm *LoggerMock) Debug(message string) {
-	lm.message = message
-}
-
-func (lm *LoggerMock) Debugf(format string, a ...interface{}) {
-	lm.message = fmt.Sprintf(format, fmt.Sprint(a...))
-}
-
-func (lm *LoggerMock) Info(message string) {
-	lm.message = message
-}
-
-func (lm *LoggerMock) Infof(format string, a ...interface{}) {
-	lm.message = fmt.Sprintf(format, fmt.Sprint(a...))
-}
-
-func (lm *LoggerMock) Warn(message string) {
-	lm.message = message
-}
-
-func (lm *LoggerMock) Warnf(format string, a ...interface{}) {
-	lm.message = fmt.Sprintf(format, fmt.Sprint(a...))
-}
-
-func (lm *LoggerMock) Error(message string) {
-	lm.message = message
-}
-
-func (lm *LoggerMock) Errorf(format string, a ...interface{}) {
-	lm.message = fmt.Sprintf(format, fmt.Sprint(a...))
-}
-
-func (lm *LoggerMock) Fatal(message string) {
-	lm.message = message
-}
-
-func (lm *LoggerMock) Fatalf(format string, a ...interface{}) {
-	lm.message = fmt.Sprintf(format, fmt.Sprint(a...))
-}
 
 func TestNew(t *testing.T) {
 	type args struct {
 		storage ConfigStorage
+		log     Logger
 	}
 	tests := []struct {
 		name   string
@@ -67,9 +23,11 @@ func TestNew(t *testing.T) {
 			name: "Success",
 			args: args{
 				storage: ConfigInfrastructure.New(envStorageMock.New()),
+				log:     LoggerMock.New(),
 			},
 			wantCr: &ConfigRepository{
 				storage: ConfigInfrastructure.New(envStorageMock.New()),
+				log:     LoggerMock.New(),
 			},
 		},
 	}
@@ -77,6 +35,58 @@ func TestNew(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if gotCr := New(tt.args.storage); !reflect.DeepEqual(gotCr, tt.wantCr) {
 				t.Errorf("New() = %v, want %v", gotCr, tt.wantCr)
+			}
+		})
+	}
+}
+
+func TestConfigRepository_SetLogger(t *testing.T) {
+	type fields struct {
+		storage ConfigStorage
+		log     Logger
+	}
+	type args struct {
+		log Logger
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+		want   *ConfigRepository
+	}{
+		{
+			name: "SuccessNewLogger",
+			fields: fields{
+				log: nil,
+			},
+			args: args{
+				log: LoggerMock.New(),
+			},
+			want: &ConfigRepository{
+				log: LoggerMock.New(),
+			},
+		},
+		{
+			name: "SuccessNilLogger",
+			fields: fields{
+				log: LoggerMock.New(),
+			},
+			args: args{
+				log: nil,
+			},
+			want: &ConfigRepository{
+				log: LoggerMock.New(),
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			r := &ConfigRepository{
+				storage: tt.fields.storage,
+				log:     tt.fields.log,
+			}
+			if got := r.SetLogger(tt.args.log); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("ConfigRepository.SetLogger() = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -101,7 +111,7 @@ func TestConfigRepository_lookupString(t *testing.T) {
 			name: "IsPresent",
 			fields: fields{
 				storage: ConfigInfrastructure.New(envStorageMock.New().SetStorageMap(map[string]string{"key": "value"})),
-				Log:     new(LoggerMock),
+				Log:     LoggerMock.New(),
 			},
 			args: args{
 				key: "key",
@@ -113,7 +123,7 @@ func TestConfigRepository_lookupString(t *testing.T) {
 			name: "IsNotPresent",
 			fields: fields{
 				storage: ConfigInfrastructure.New(envStorageMock.New()),
-				Log:     new(LoggerMock),
+				Log:     LoggerMock.New(),
 			},
 			args: args{
 				key: "key",
@@ -158,7 +168,7 @@ func TestConfigRepository_LookupString(t *testing.T) {
 			name: "IsPresent",
 			fields: fields{
 				storage: ConfigInfrastructure.New(envStorageMock.New().SetStorageMap(map[string]string{"key": "value"})),
-				Log:     new(LoggerMock),
+				Log:     LoggerMock.New(),
 			},
 			args: args{
 				key: "key",
@@ -170,7 +180,7 @@ func TestConfigRepository_LookupString(t *testing.T) {
 			name: "IsNotPresent",
 			fields: fields{
 				storage: ConfigInfrastructure.New(envStorageMock.New()),
-				Log:     new(LoggerMock),
+				Log:     LoggerMock.New(),
 			},
 			args: args{
 				key: "key",
@@ -216,7 +226,7 @@ func TestConfigRepository_LookupBool(t *testing.T) {
 			name: "IsPresentTrue",
 			fields: fields{
 				storage: ConfigInfrastructure.New(envStorageMock.New().SetStorageMap(map[string]string{"key": "true"})),
-				Log:     new(LoggerMock),
+				Log:     LoggerMock.New(),
 			},
 			args: args{
 				key: "key",
@@ -228,7 +238,7 @@ func TestConfigRepository_LookupBool(t *testing.T) {
 			name: "IsPresentFalse",
 			fields: fields{
 				storage: ConfigInfrastructure.New(envStorageMock.New().SetStorageMap(map[string]string{"key": "false"})),
-				Log:     new(LoggerMock),
+				Log:     LoggerMock.New(),
 			},
 			args: args{
 				key: "key",
@@ -240,7 +250,7 @@ func TestConfigRepository_LookupBool(t *testing.T) {
 			name: "IsNotPresent",
 			fields: fields{
 				storage: ConfigInfrastructure.New(envStorageMock.New()),
-				Log:     new(LoggerMock),
+				Log:     LoggerMock.New(),
 			},
 			args: args{
 				key: "key",
@@ -252,7 +262,7 @@ func TestConfigRepository_LookupBool(t *testing.T) {
 			name: "ParseErr",
 			fields: fields{
 				storage: ConfigInfrastructure.New(envStorageMock.New().SetStorageMap(map[string]string{"key": "value"})),
-				Log:     new(LoggerMock),
+				Log:     LoggerMock.New(),
 			},
 			args: args{
 				key: "key",
@@ -302,7 +312,7 @@ func TestConfigRepository_LookupInt64(t *testing.T) {
 			name: "IsPresent",
 			fields: fields{
 				storage: ConfigInfrastructure.New(envStorageMock.New().SetStorageMap(map[string]string{"key": "-1000"})),
-				Log:     new(LoggerMock),
+				Log:     LoggerMock.New(),
 			},
 			args: args{
 				key: "key",
@@ -314,7 +324,7 @@ func TestConfigRepository_LookupInt64(t *testing.T) {
 			name: "IsNotPresent",
 			fields: fields{
 				storage: ConfigInfrastructure.New(envStorageMock.New()),
-				Log:     new(LoggerMock),
+				Log:     LoggerMock.New(),
 			},
 			args: args{
 				key: "key",
@@ -326,7 +336,7 @@ func TestConfigRepository_LookupInt64(t *testing.T) {
 			name: "ParseErr",
 			fields: fields{
 				storage: ConfigInfrastructure.New(envStorageMock.New().SetStorageMap(map[string]string{"key": "value"})),
-				Log:     new(LoggerMock),
+				Log:     LoggerMock.New(),
 			},
 			args: args{
 				key: "key",
@@ -376,7 +386,7 @@ func TestConfigRepository_LookupUint64(t *testing.T) {
 			name: "IsPresent",
 			fields: fields{
 				storage: ConfigInfrastructure.New(envStorageMock.New().SetStorageMap(map[string]string{"key": "1000"})),
-				Log:     new(LoggerMock),
+				Log:     LoggerMock.New(),
 			},
 			args: args{
 				key: "key",
@@ -388,7 +398,7 @@ func TestConfigRepository_LookupUint64(t *testing.T) {
 			name: "IsNotPresent",
 			fields: fields{
 				storage: ConfigInfrastructure.New(envStorageMock.New()),
-				Log:     new(LoggerMock),
+				Log:     LoggerMock.New(),
 			},
 			args: args{
 				key: "key",
@@ -400,7 +410,7 @@ func TestConfigRepository_LookupUint64(t *testing.T) {
 			name: "ParseErr",
 			fields: fields{
 				storage: ConfigInfrastructure.New(envStorageMock.New().SetStorageMap(map[string]string{"key": "value"})),
-				Log:     new(LoggerMock),
+				Log:     LoggerMock.New(),
 			},
 			args: args{
 				key: "key",
@@ -450,7 +460,7 @@ func TestConfigRepository_LookupFloat64(t *testing.T) {
 			name: "IsPresent",
 			fields: fields{
 				storage: ConfigInfrastructure.New(envStorageMock.New().SetStorageMap(map[string]string{"key": "3.14"})),
-				Log:     new(LoggerMock),
+				Log:     LoggerMock.New(),
 			},
 			args: args{
 				key: "key",
@@ -462,7 +472,7 @@ func TestConfigRepository_LookupFloat64(t *testing.T) {
 			name: "IsNotPresent",
 			fields: fields{
 				storage: ConfigInfrastructure.New(envStorageMock.New()),
-				Log:     new(LoggerMock),
+				Log:     LoggerMock.New(),
 			},
 			args: args{
 				key: "key",
@@ -474,7 +484,7 @@ func TestConfigRepository_LookupFloat64(t *testing.T) {
 			name: "ParseErr",
 			fields: fields{
 				storage: ConfigInfrastructure.New(envStorageMock.New().SetStorageMap(map[string]string{"key": "value"})),
-				Log:     new(LoggerMock),
+				Log:     LoggerMock.New(),
 			},
 			args: args{
 				key: "key",
@@ -522,7 +532,7 @@ func TestConfigRepository_GetString(t *testing.T) {
 			name: "Success",
 			fields: fields{
 				storage: ConfigInfrastructure.New(envStorageMock.New().SetStorageMap(map[string]string{"key": "value"})),
-				Log:     new(LoggerMock),
+				Log:     LoggerMock.New(),
 			},
 			args: args{
 				key: "key",
@@ -533,7 +543,7 @@ func TestConfigRepository_GetString(t *testing.T) {
 			name: "IsNotPresent",
 			fields: fields{
 				storage: ConfigInfrastructure.New(envStorageMock.New()),
-				Log:     new(LoggerMock),
+				Log:     LoggerMock.New(),
 			},
 			args: args{
 				key: "key",
@@ -573,7 +583,7 @@ func TestConfigRepository_GetBool(t *testing.T) {
 			name: "IsPresentTrue",
 			fields: fields{
 				storage: ConfigInfrastructure.New(envStorageMock.New().SetStorageMap(map[string]string{"key": "true"})),
-				Log:     new(LoggerMock),
+				Log:     LoggerMock.New(),
 			},
 			args: args{
 				key: "key",
@@ -584,7 +594,7 @@ func TestConfigRepository_GetBool(t *testing.T) {
 			name: "IsPresentFalse",
 			fields: fields{
 				storage: ConfigInfrastructure.New(envStorageMock.New().SetStorageMap(map[string]string{"key": "false"})),
-				Log:     new(LoggerMock),
+				Log:     LoggerMock.New(),
 			},
 			args: args{
 				key: "key",
@@ -595,7 +605,7 @@ func TestConfigRepository_GetBool(t *testing.T) {
 			name: "IsNotPresent",
 			fields: fields{
 				storage: ConfigInfrastructure.New(envStorageMock.New()),
-				Log:     new(LoggerMock),
+				Log:     LoggerMock.New(),
 			},
 			args: args{
 				key: "key",
@@ -606,14 +616,13 @@ func TestConfigRepository_GetBool(t *testing.T) {
 			name: "ParseErr",
 			fields: fields{
 				storage: ConfigInfrastructure.New(envStorageMock.New().SetStorageMap(map[string]string{"key": "value"})),
-				Log:     new(LoggerMock),
+				Log:     LoggerMock.New(),
 			},
 			args: args{
 				key: "key",
 			},
 			wantErr: true,
 		},
-		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -652,7 +661,7 @@ func TestConfigRepository_GetInt64(t *testing.T) {
 			name: "IsPresent",
 			fields: fields{
 				storage: ConfigInfrastructure.New(envStorageMock.New().SetStorageMap(map[string]string{"key": "-1000"})),
-				Log:     new(LoggerMock),
+				Log:     LoggerMock.New(),
 			},
 			args: args{
 				key: "key",
@@ -663,7 +672,7 @@ func TestConfigRepository_GetInt64(t *testing.T) {
 			name: "IsNotPresent",
 			fields: fields{
 				storage: ConfigInfrastructure.New(envStorageMock.New()),
-				Log:     new(LoggerMock),
+				Log:     LoggerMock.New(),
 			},
 			args: args{
 				key: "key",
@@ -674,7 +683,7 @@ func TestConfigRepository_GetInt64(t *testing.T) {
 			name: "ParseErr",
 			fields: fields{
 				storage: ConfigInfrastructure.New(envStorageMock.New().SetStorageMap(map[string]string{"key": "value"})),
-				Log:     new(LoggerMock),
+				Log:     LoggerMock.New(),
 			},
 			args: args{
 				key: "key",
@@ -719,7 +728,7 @@ func TestConfigRepository_GetUint64(t *testing.T) {
 			name: "IsPresent",
 			fields: fields{
 				storage: ConfigInfrastructure.New(envStorageMock.New().SetStorageMap(map[string]string{"key": "1000"})),
-				Log:     new(LoggerMock),
+				Log:     LoggerMock.New(),
 			},
 			args: args{
 				key: "key",
@@ -730,7 +739,7 @@ func TestConfigRepository_GetUint64(t *testing.T) {
 			name: "IsNotPresent",
 			fields: fields{
 				storage: ConfigInfrastructure.New(envStorageMock.New()),
-				Log:     new(LoggerMock),
+				Log:     LoggerMock.New(),
 			},
 			args: args{
 				key: "key",
@@ -741,7 +750,7 @@ func TestConfigRepository_GetUint64(t *testing.T) {
 			name: "ParseErr",
 			fields: fields{
 				storage: ConfigInfrastructure.New(envStorageMock.New().SetStorageMap(map[string]string{"key": "value"})),
-				Log:     new(LoggerMock),
+				Log:     LoggerMock.New(),
 			},
 			args: args{
 				key: "key",
@@ -786,7 +795,7 @@ func TestConfigRepository_GetFloat64(t *testing.T) {
 			name: "IsPresent",
 			fields: fields{
 				storage: ConfigInfrastructure.New(envStorageMock.New().SetStorageMap(map[string]string{"key": "3.14"})),
-				Log:     new(LoggerMock),
+				Log:     LoggerMock.New(),
 			},
 			args: args{
 				key: "key",
@@ -797,7 +806,7 @@ func TestConfigRepository_GetFloat64(t *testing.T) {
 			name: "IsNotPresent",
 			fields: fields{
 				storage: ConfigInfrastructure.New(envStorageMock.New()),
-				Log:     new(LoggerMock),
+				Log:     LoggerMock.New(),
 			},
 			args: args{
 				key: "key",
@@ -808,7 +817,7 @@ func TestConfigRepository_GetFloat64(t *testing.T) {
 			name: "ParseErr",
 			fields: fields{
 				storage: ConfigInfrastructure.New(envStorageMock.New().SetStorageMap(map[string]string{"key": "value"})),
-				Log:     new(LoggerMock),
+				Log:     LoggerMock.New(),
 			},
 			args: args{
 				key: "key",
@@ -854,7 +863,7 @@ func TestConfigRepository_SetString(t *testing.T) {
 			name: "Success",
 			fields: fields{
 				storage: ConfigInfrastructure.New(envStorageMock.New()),
-				Log:     new(LoggerMock),
+				Log:     LoggerMock.New(),
 			},
 			args: args{
 				key:   "key",
@@ -866,7 +875,7 @@ func TestConfigRepository_SetString(t *testing.T) {
 			name: "StorageErr",
 			fields: fields{
 				storage: ConfigInfrastructure.New(envStorageMock.New().SimulateError()),
-				Log:     new(LoggerMock),
+				Log:     LoggerMock.New(),
 			},
 			args: args{
 				key:   "key",
@@ -912,7 +921,7 @@ func TestConfigRepository_SetBool(t *testing.T) {
 			name: "Success",
 			fields: fields{
 				storage: ConfigInfrastructure.New(envStorageMock.New()),
-				Log:     new(LoggerMock),
+				Log:     LoggerMock.New(),
 			},
 			args: args{
 				key:   "key",
@@ -924,7 +933,7 @@ func TestConfigRepository_SetBool(t *testing.T) {
 			name: "StorageErr",
 			fields: fields{
 				storage: ConfigInfrastructure.New(envStorageMock.New().SimulateError()),
-				Log:     new(LoggerMock),
+				Log:     LoggerMock.New(),
 			},
 			args: args{
 				key:   "key",
@@ -970,7 +979,7 @@ func TestConfigRepository_SetInt64(t *testing.T) {
 			name: "Success",
 			fields: fields{
 				storage: ConfigInfrastructure.New(envStorageMock.New()),
-				Log:     new(LoggerMock),
+				Log:     LoggerMock.New(),
 			},
 			args: args{
 				key:   "key",
@@ -982,7 +991,7 @@ func TestConfigRepository_SetInt64(t *testing.T) {
 			name: "StorageErr",
 			fields: fields{
 				storage: ConfigInfrastructure.New(envStorageMock.New().SimulateError()),
-				Log:     new(LoggerMock),
+				Log:     LoggerMock.New(),
 			},
 			args: args{
 				key:   "key",
@@ -991,7 +1000,6 @@ func TestConfigRepository_SetInt64(t *testing.T) {
 			wantErr:     true,
 			wantStorage: ConfigInfrastructure.New(envStorageMock.New()),
 		},
-		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -1029,7 +1037,7 @@ func TestConfigRepository_SetUint64(t *testing.T) {
 			name: "Success",
 			fields: fields{
 				storage: ConfigInfrastructure.New(envStorageMock.New()),
-				Log:     new(LoggerMock),
+				Log:     LoggerMock.New(),
 			},
 			args: args{
 				key:   "key",
@@ -1041,7 +1049,7 @@ func TestConfigRepository_SetUint64(t *testing.T) {
 			name: "StorageErr",
 			fields: fields{
 				storage: ConfigInfrastructure.New(envStorageMock.New().SimulateError()),
-				Log:     new(LoggerMock),
+				Log:     LoggerMock.New(),
 			},
 			args: args{
 				key:   "key",
@@ -1087,7 +1095,7 @@ func TestConfigRepository_SetFloat64(t *testing.T) {
 			name: "Success",
 			fields: fields{
 				storage: ConfigInfrastructure.New(envStorageMock.New()),
-				Log:     new(LoggerMock),
+				Log:     LoggerMock.New(),
 			},
 			args: args{
 				key:   "key",
@@ -1099,7 +1107,7 @@ func TestConfigRepository_SetFloat64(t *testing.T) {
 			name: "StorageErr",
 			fields: fields{
 				storage: ConfigInfrastructure.New(envStorageMock.New().SimulateError()),
-				Log:     new(LoggerMock),
+				Log:     LoggerMock.New(),
 			},
 			args: args{
 				key:   "key",
@@ -1149,7 +1157,7 @@ func TestConfigRepository_UnSet(t *testing.T) {
 					"key2": "value2",
 					"key3": "value3",
 				})),
-				Log: new(LoggerMock),
+				Log: LoggerMock.New(),
 			},
 			args: args{
 				key: "key2",
@@ -1167,7 +1175,7 @@ func TestConfigRepository_UnSet(t *testing.T) {
 					"key2": "value2",
 					"key3": "value3",
 				})),
-				Log: new(LoggerMock),
+				Log: LoggerMock.New(),
 			},
 			args: args{
 				key: "key2",
@@ -1217,7 +1225,7 @@ func TestConfigRepository_Expand(t *testing.T) {
 				storage: ConfigInfrastructure.New(envStorageMock.New().SetStorageMap(map[string]string{
 					"key1": "value1",
 				})),
-				Log: new(LoggerMock),
+				Log: LoggerMock.New(),
 			},
 			args: args{
 				sIn: "key1 is $key1",
@@ -1228,7 +1236,7 @@ func TestConfigRepository_Expand(t *testing.T) {
 			name: "IsNotPresent",
 			fields: fields{
 				storage: ConfigInfrastructure.New(envStorageMock.New()),
-				Log:     new(LoggerMock),
+				Log:     LoggerMock.New(),
 			},
 			args: args{
 				sIn: "key1 is $key1",
@@ -1267,7 +1275,7 @@ func TestConfigRepository_Vars(t *testing.T) {
 					"key2": "value2",
 					"key3": "value3",
 				})),
-				Log: new(LoggerMock),
+				Log: LoggerMock.New(),
 			},
 			wantVars: []string{
 				"key1=value1",
@@ -1307,7 +1315,7 @@ func TestConfigRepository_ClearAll(t *testing.T) {
 					"key2": "value2",
 					"key3": "value3",
 				})),
-				Log: new(LoggerMock),
+				Log: LoggerMock.New(),
 			},
 			wantStorage: ConfigInfrastructure.New(envStorageMock.New()),
 		},

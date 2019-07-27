@@ -2,6 +2,7 @@ package ConfigRepository
 
 import (
 	"fmt"
+	"github.com/AntonParaskiv/cleanarch-config/mocks/LoggerMock"
 	"github.com/pkg/errors"
 	"strconv"
 )
@@ -39,15 +40,19 @@ type ConfigRepository struct {
 	log     Logger
 }
 
-func New(storage ConfigStorage) (cr *ConfigRepository) {
-	cr = new(ConfigRepository)
-	cr.storage = storage
+func New(storage ConfigStorage) (r *ConfigRepository) {
+	r = new(ConfigRepository)
+	r.storage = storage
+	r.log = LoggerMock.New()
 	return
 }
 
-func (cr *ConfigRepository) SetLogger(log Logger) *ConfigRepository {
-	cr.log = log
-	return cr
+func (r *ConfigRepository) SetLogger(log Logger) *ConfigRepository {
+	if log == nil {
+		log = LoggerMock.New()
+	}
+	r.log = log
+	return r
 }
 
 func (r *ConfigRepository) lookupString(key string) (value string, isPresent bool) {
