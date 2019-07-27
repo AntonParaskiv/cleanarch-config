@@ -1,21 +1,21 @@
 package ConfigVar
 
 type VarBool struct {
-	confVar *Var
+	configVar *Var
 }
 
 func (v *Var) Bool() (vb *VarBool) {
 	v.varType = "bool"
-	vb = &VarBool{confVar: v}
+	vb = &VarBool{configVar: v}
 	return
 }
 
 func (v *VarBool) Get() (value bool) {
-	return v.confVar.value.(bool)
+	return v.configVar.value.(bool)
 }
 
 func (v *VarBool) Default(defaultValue bool) *VarBool {
-	v.confVar.isRequired = false
-	v.confVar.defaultValue = defaultValue
+	v.configVar.isRequired = false
+	v.configVar.defaultValue = defaultValue
 	return v
 }
