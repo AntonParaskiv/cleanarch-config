@@ -11,6 +11,11 @@ func New() (m *LoggerMock) {
 	return
 }
 
+func (m *LoggerMock) SetMessage(message string) *LoggerMock {
+	m.message = message
+	return m
+}
+
 func (m *LoggerMock) Message() string {
 	return m.message
 }

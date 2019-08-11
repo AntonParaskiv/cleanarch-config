@@ -1,4 +1,4 @@
-package envStorageMock
+package EnvStorageMock
 
 import (
 	"fmt"

@@ -432,3 +432,38 @@ func TestLoggerMock_Fatalf(t *testing.T) {
 		})
 	}
 }
+
+func TestLoggerMock_SetMessage(t *testing.T) {
+	type fields struct {
+		message string
+	}
+	type args struct {
+		message string
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+		want   *LoggerMock
+	}{
+		{
+			name: "Success",
+			args: args{
+				message: "testMessage",
+			},
+			want: &LoggerMock{
+				message: "testMessage",
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			m := &LoggerMock{
+				message: tt.fields.message,
+			}
+			if got := m.SetMessage(tt.args.message); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("LoggerMock.SetMessage() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}

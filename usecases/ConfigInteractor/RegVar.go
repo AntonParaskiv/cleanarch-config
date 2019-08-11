@@ -10,7 +10,7 @@ const (
 	errEmptyKey                = errRegisterConfigVarFailed + "empty key"
 )
 
-func (i *ConfigInteractor) RegVar(key string) (configVar *ConfigVar.Var) {
+func (i *Interactor) RegVar(key string) (configVar *ConfigVar.Var) {
 	if key == "" {
 		err := errors.Errorf(errEmptyKey)
 		panic(err)

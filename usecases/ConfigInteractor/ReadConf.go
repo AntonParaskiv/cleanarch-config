@@ -9,7 +9,7 @@ const (
 	errGetKeyFailedUnkownType = errReadConfFailed + "get %s failed: unknown type %s"
 )
 
-func (i *ConfigInteractor) ReadConf() (errs []error) {
+func (i *Interactor) ReadConf() (errs []error) {
 	i.log.Debug("config reading started")
 
 	var value interface{}
@@ -19,19 +19,19 @@ func (i *ConfigInteractor) ReadConf() (errs []error) {
 	// for all vars
 	for key, confVar := range i.envMap {
 
-		// get value from repo
+		// get value from repository
 		switch confVar.Type() {
 		case "string":
-			value, isPresent = i.repo.LookupString(key)
+			value, isPresent = i.repository.LookupString(key)
 			err = nil
 		case "bool":
-			value, isPresent, err = i.repo.LookupBool(key)
+			value, isPresent, err = i.repository.LookupBool(key)
 		case "int64":
-			value, isPresent, err = i.repo.LookupInt64(key)
+			value, isPresent, err = i.repository.LookupInt64(key)
 		case "uint64":
-			value, isPresent, err = i.repo.LookupUint64(key)
+			value, isPresent, err = i.repository.LookupUint64(key)
 		case "float64":
-			value, isPresent, err = i.repo.LookupFloat64(key)
+			value, isPresent, err = i.repository.LookupFloat64(key)
 		default:
 			err := errors.Errorf(errGetKeyFailedUnkownType, key, confVar.Type())
 			errs = append(errs, err)
