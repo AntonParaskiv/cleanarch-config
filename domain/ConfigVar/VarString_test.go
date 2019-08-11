@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-func TestVar_Bool(t *testing.T) {
+func TestVar_String(t *testing.T) {
 	type fields struct {
 		key          string
 		value        interface{}
@@ -16,13 +16,13 @@ func TestVar_Bool(t *testing.T) {
 	tests := []struct {
 		name   string
 		fields fields
-		wantVb *VarBool
+		wantVs *VarString
 	}{
 		{
 			name: "Success",
-			wantVb: &VarBool{
+			wantVs: &VarString{
 				configVar: &Var{
-					varType: "bool",
+					varType: "string",
 				},
 			},
 		},
@@ -36,56 +36,56 @@ func TestVar_Bool(t *testing.T) {
 				isRequired:   tt.fields.isRequired,
 				defaultValue: tt.fields.defaultValue,
 			}
-			if gotVb := v.Bool(); !reflect.DeepEqual(gotVb, tt.wantVb) {
-				t.Errorf("Var.Bool() = %v, want %v", gotVb, tt.wantVb)
+			if gotVs := v.String(); !reflect.DeepEqual(gotVs, tt.wantVs) {
+				t.Errorf("Var.String() = %v, want %v", gotVs, tt.wantVs)
 			}
 		})
 	}
 }
 
-func TestVarBool_Get(t *testing.T) {
+func TestVarString_Get(t *testing.T) {
 	type fields struct {
 		configVar *Var
 	}
 	tests := []struct {
 		name      string
 		fields    fields
-		wantValue bool
+		wantValue string
 	}{
 		{
 			name: "Success",
 			fields: fields{
 				configVar: &Var{
-					value: true,
+					value: "text",
 				},
 			},
-			wantValue: true,
+			wantValue: "text",
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			v := &VarBool{
+			v := &VarString{
 				configVar: tt.fields.configVar,
 			}
 			if gotValue := v.Get(); gotValue != tt.wantValue {
-				t.Errorf("VarBool.Get() = %v, want %v", gotValue, tt.wantValue)
+				t.Errorf("VarString.Get() = %v, want %v", gotValue, tt.wantValue)
 			}
 		})
 	}
 }
 
-func TestVarBool_Default(t *testing.T) {
+func TestVarString_Default(t *testing.T) {
 	type fields struct {
 		configVar *Var
 	}
 	type args struct {
-		defaultValue bool
+		defaultValue string
 	}
 	tests := []struct {
 		name   string
 		fields fields
 		args   args
-		want   *VarBool
+		want   *VarString
 	}{
 		{
 			name: "Success",
@@ -95,23 +95,23 @@ func TestVarBool_Default(t *testing.T) {
 				},
 			},
 			args: args{
-				defaultValue: true,
+				defaultValue: "text",
 			},
-			want: &VarBool{
+			want: &VarString{
 				configVar: &Var{
 					isRequired:   false,
-					defaultValue: true,
+					defaultValue: "text",
 				},
 			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			v := &VarBool{
+			v := &VarString{
 				configVar: tt.fields.configVar,
 			}
 			if got := v.Default(tt.args.defaultValue); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("VarBool.Default() = %v, want %v", got, tt.want)
+				t.Errorf("VarString.Default() = %v, want %v", got, tt.want)
 			}
 		})
 	}

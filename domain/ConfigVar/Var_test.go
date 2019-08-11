@@ -60,7 +60,6 @@ func TestVar_SetValue(t *testing.T) {
 				value: "TestValue",
 			},
 		},
-		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -136,7 +135,6 @@ func TestVar_IsRequired(t *testing.T) {
 			},
 			want: true,
 		},
-		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
