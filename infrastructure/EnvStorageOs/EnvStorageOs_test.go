@@ -1,4 +1,4 @@
-package envStorageOs
+package EnvStorageOs
 
 import (
 	"os"

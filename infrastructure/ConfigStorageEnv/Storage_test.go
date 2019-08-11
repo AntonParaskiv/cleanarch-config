@@ -1,7 +1,7 @@
-package configStorageEnv
+package ConfigStorageEnv
 
 import (
-	"github.com/AntonParaskiv/cleanarch-config/infrastructure/envStorageMock"
+	"github.com/AntonParaskiv/cleanarch-config/infrastructure/EnvStorageMock"
 	"reflect"
 	"testing"
 )
@@ -14,18 +14,18 @@ const (
 )
 
 var (
-	envStorage       *envStorageMock.MockEnv
-	configStorageEnv *ConfigStorageEnv
+	envStorage       *EnvStorageMock.MockEnv
+	configStorageEnv *ConfigStorage
 )
 
 // New
 func TestConfigStorageEnv_New(t *testing.T) {
-	envStorage = envStorageMock.New()
+	envStorage = EnvStorageMock.New()
 	envStorage.Storage["key"] = "value"
 	envStorage.Storage["lorem"] = "ipsum"
 	envStorage.Storage["ilike"] = "gophers"
 
-	configStorageEnvExpect := &ConfigStorageEnv{
+	configStorageEnvExpect := &ConfigStorage{
 		storage: envStorage,
 	}
 
@@ -221,7 +221,7 @@ func sameStringSlice(x, y []string) bool {
 func BenchmarkNewConfigStorageEnv(b *testing.B) {
 	b.ReportAllocs()
 
-	envStorage = envStorageMock.New()
+	envStorage = EnvStorageMock.New()
 	envStorage.Storage["key"] = "value"
 	envStorage.Storage["lorem"] = "ipsum"
 	envStorage.Storage["ilike"] = "gophers"
